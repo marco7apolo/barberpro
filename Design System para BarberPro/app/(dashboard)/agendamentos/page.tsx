@@ -55,6 +55,39 @@ function toLocalDateTimeInput(value: string) {
   return localDate.toISOString().slice(0, 16);
 }
 
+async function syncTransacao(
+  agendamentoId: string,
+  valorTotal: number,
+  formaPagamento: string,
+  pago: boolean,
+) {
+  const actionSupabase = await createSupabaseServerClient();
+
+  const { data: existing } = await actionSupabase
+    .from("transacoes")
+    .select("id")
+    .eq("agendamento_id", agendamentoId)
+    .limit(1)
+    .maybeSingle();
+
+  const payload = {
+    agendamento_id: agendamentoId,
+    tipo: "receita",
+    valor: valorTotal,
+    forma_pagamento: formaPagamento || null,
+    descricao: "Pagamento vinculado ao agendamento",
+    status: pago ? "pago" : "pendente",
+    processado_em: pago ? new Date().toISOString() : null,
+  };
+
+  if (existing?.id) {
+    await actionSupabase.from("transacoes").update(payload).eq("id", existing.id);
+    return;
+  }
+
+  await actionSupabase.from("transacoes").insert(payload);
+}
+
 export default async function AgendamentosPage() {
   const supabase = await createSupabaseServerClient();
 
@@ -83,39 +116,6 @@ export default async function AgendamentosPage() {
   const clientesMap = new Map((clientes ?? []).map((cliente) => [cliente.id, cliente.nome]));
   const barbeirosMap = new Map((barbeiros ?? []).map((barbeiro) => [barbeiro.id, barbeiro.nome_exibicao]));
   const servicosMap = new Map((servicos ?? []).map((servico) => [servico.id, servico.nome]));
-
-  async function syncTransacao(
-    agendamentoId: string,
-    valorTotal: number,
-    formaPagamento: string,
-    pago: boolean,
-  ) {
-    const actionSupabase = await createSupabaseServerClient();
-
-    const { data: existing } = await actionSupabase
-      .from("transacoes")
-      .select("id")
-      .eq("agendamento_id", agendamentoId)
-      .limit(1)
-      .maybeSingle();
-
-    const payload = {
-      agendamento_id: agendamentoId,
-      tipo: "receita",
-      valor: valorTotal,
-      forma_pagamento: formaPagamento || null,
-      descricao: "Pagamento vinculado ao agendamento",
-      status: pago ? "pago" : "pendente",
-      processado_em: pago ? new Date().toISOString() : null,
-    };
-
-    if (existing?.id) {
-      await actionSupabase.from("transacoes").update(payload).eq("id", existing.id);
-      return;
-    }
-
-    await actionSupabase.from("transacoes").insert(payload);
-  }
 
   async function createAgendamento(formData: FormData) {
     "use server";
