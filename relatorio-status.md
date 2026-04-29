@@ -1,97 +1,133 @@
-﻿# BarberPro - Relatorio de Status Atualizado
+﻿# BarberPro - Relatorio de Status (Atualizado)
 
 **Data:** 29/04/2026  
 **Projeto:** BarberPro (UNIVESP)  
-**Stack:** Next.js 14 + Supabase SSR + TypeScript + Tailwind + shadcn/ui
+**Versao base:** Next.js 14 + Supabase SSR + Zod
 
 ---
 
 ## 1. Resumo Executivo
 
-O projeto foi migrado para **Next.js 14 (App Router)** e esta **compilando com sucesso** em build de producao.
+O projeto esta funcional com autenticacao, protecao de rotas e CRUDs conectados ao schema real do Supabase.
 
-No estado atual:
-- Autenticacao via Supabase com cookies HttpOnly (Server Actions + middleware)
-- Layout separado em `(auth)` e `(dashboard)`
-- CRUD de **Barbeiros** e **Servicos** funcionando com **Zod no servidor**
-- LGPD visivel no login (checkbox + link para politica)
-- Webhook PIX com esqueleto seguro (validacao + assinatura)
-- SQL final da barbearia salvo no repositorio
-
----
-
-## 2. Banco de Dados (Supabase)
-
-O schema final informado foi aplicado no Supabase e também versionado em:
-
-- `Design System para BarberPro/supabase/migrations/20260429_schema_final_rls_lgpd.sql`
-
-Principais pontos do schema final:
-- Tabelas de dominio completas: `perfis`, `barbeiros`, `clientes`, `categorias_servicos`, `servicos`, `agendamentos`, `transacoes`, `notificacoes`, `audit_log`, `arquivos`
-- RLS habilitado nas tabelas principais
-- Policies por cargo (`admin`, `barbeiro`, `atendente`)
-- Triggers de `updated_at` automatico
+Estado atual validado:
+- Login funcionando com usuario Supabase Auth
+- Dashboard abre corretamente apos login
+- CRUD de Barbeiros funcionando
+- CRUD de Servicos funcionando
+- CRUD de Clientes implementado e funcional
+- CRUD de Agendamentos implementado e funcional
+- Agendamentos sincronizando transacoes financeiras
+- Build de producao concluindo sem erros
 
 ---
 
-## 3. Ajustes de Codigo Feitos Hoje
+## 2. Passo a Passo do Que Foi Feito
 
-### 3.1 Conexao Supabase local
-- `.env.local` configurado com URL e anon key do projeto Supabase
-- `NEXT_PUBLIC_SUPABASE_URL` apontando para o projeto correto
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` configurada localmente
+### Passo 1 - Diagnostico do erro nas telas
+- Conferencia do estado das rotas e do App Router.
+- Validacao dos arquivos de `barbeiros` e `servicos` com schema real.
+- Ajuste de robustez para exibir erro em tela sem quebrar rota (quando consulta falhar).
 
-### 3.2 CRUD Barbeiros alinhado ao schema real
+### Passo 2 - Alinhamento total com schema final do Supabase
+- Confirmacao das tabelas reais aplicadas:
+`agendamentos`, `arquivos`, `audit_log`, `barbeiros`, `categorias_servicos`, `clientes`, `notificacoes`, `perfis`, `servicos`, `transacoes`.
+- Versionamento do SQL no projeto:
+`Design System para BarberPro/supabase/migrations/20260429_schema_final_rls_lgpd.sql`.
+
+### Passo 3 - CRUD de Clientes (novo)
 Arquivo:
-- `Design System para BarberPro/app/(dashboard)/dashboard/barbeiros/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/clientes/page.tsx`
 
-Campos ajustados para a tabela real:
-- `nome_exibicao`, `cpf`, `telefone`, `email`, `especialidades`, `comissao_percent`, `valor_minimo_servico`, `ativo`
+Implementado:
+- Create, Read, Update, Delete
+- Validacao Zod no servidor
+- Campos LGPD (`consentimento_lgpd`) com estrutura JSON real
+- Campo `criado_por` ligado a `barbeiros`
+- Preferencias convertidas para JSON
 
-### 3.3 CRUD Servicos alinhado ao schema real
+### Passo 4 - CRUD de Agendamentos (novo)
 Arquivo:
-- `Design System para BarberPro/app/(dashboard)/dashboard/servicos/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/agendamentos/page.tsx`
 
-Campos ajustados para a tabela real:
-- `categoria_id`, `nome`, `descricao`, `duracao_minutos`, `preco`, `preco_promocional`, `buffer_minutos`, `ativo`
-- Leitura de categorias em `categorias_servicos`
+Implementado:
+- Create, Read, Update, Delete
+- Validacao Zod no servidor
+- Relacao com `clientes`, `barbeiros` e `servicos`
+- Datas `data_inicio`/`data_fim` com conversao para ISO
+- Campos financeiros: `valor_total`, `gorjeta`, `forma_pagamento`, `pago`
 
-### 3.4 Build validado
+### Passo 5 - Interligacao financeira com `transacoes`
+No CRUD de agendamentos:
+- Ao criar/atualizar agendamento, a transacao vinculada e criada ou atualizada.
+- Campos sincronizados: `tipo='receita'`, `valor`, `forma_pagamento`, `status`, `processado_em`.
+
+### Passo 6 - Dashboard com dados reais
+Arquivo:
+- `Design System para BarberPro/app/(dashboard)/dashboard/page.tsx`
+
+Implementado:
+- KPIs por consultas reais no Supabase:
+  - agendamentos do dia
+  - faturamento do dia (transacoes)
+  - barbeiros ativos
+  - taxa de ocupacao
+- Lista de proximos agendamentos com nomes de cliente/barbeiro/servico
+
+### Passo 7 - Validacao tecnica final
 Comando executado:
 - `npm run build`
 
 Resultado:
-- Build concluido com sucesso (sem erro de TypeScript)
+- Build concluido com sucesso.
 
 ---
 
-## 4. Checklist UNIVESP (Atual)
+## 3. Status por Modulo
 
-- [x] Next.js local rodando
-- [x] Login/Logout com Supabase Auth + cookies seguros
-- [x] 2 CRUDs completos (Barbeiros + Servicos) com Zod
-- [x] LGPD visivel no login
-- [x] Supabase conectado e schema com RLS aplicado
-- [x] UI responsiva dark (base atual)
-- [ ] Historico de commits semanticos (sera gerado em seguida)
-- [x] README atualizado com setup e `.env.example`
-
----
-
-## 5. Proximos Passos Recomendados
-
-1. Popular `perfis` com pelo menos 1 usuario `admin` para liberar writes via RLS nas tabelas administrativas.
-2. Implementar CRUD real de `clientes` e `agendamentos` em cima do schema ja criado.
-3. Conectar dashboard aos dados reais das tabelas.
-4. Evoluir multi-tenant por subdominio usando `barbearia_id` em estrategia de tenancy.
+| Modulo | Status | Observacao |
+|---|---|---|
+| Auth + cookies HttpOnly | Pronto | Supabase SSR + middleware |
+| Dashboard | Pronto | Dados reais do banco |
+| CRUD Barbeiros | Pronto | Schema real |
+| CRUD Servicos | Pronto | Schema real + categorias |
+| CRUD Clientes | Pronto | Inclui LGPD em JSON |
+| CRUD Agendamentos | Pronto | Integrado com transacoes |
+| Webhook PIX | Em progresso | Esqueleto seguro pronto |
+| RLS + Policies | Pronto | Aplicadas no Supabase |
 
 ---
 
-## 6. Observacao sobre GitHub Desktop (Summary)
+## 4. Validações para uso imediato
 
-No GitHub Desktop, o campo **Summary** e o **titulo obrigatorio do commit** (linha curta, ex: `feat(auth): ...`).
-Sem ele, o Desktop nao deixa confirmar o commit.
+1. Acesse `/login` e entre com usuario criado em **Supabase Auth**.
+2. Teste criar um barbeiro.
+3. Teste criar um servico.
+4. Teste criar um cliente.
+5. Teste criar um agendamento e marcar como pago.
+6. Verifique no banco a linha correspondente em `transacoes`.
 
 ---
 
-*Atualizado automaticamente em 29/04/2026.*
+## 5. Observacao importante (Auth)
+
+- Senha do PostgreSQL **nao** autentica no app.
+- Login do app usa **Authentication > Users** do Supabase.
+- Para permissao de escrita nas tabelas administrativas, manter registro em `perfis` com `cargo='admin'`.
+
+---
+
+## 6. Arquivos-chave alterados nesta etapa
+
+- `Design System para BarberPro/app/(dashboard)/clientes/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/agendamentos/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/dashboard/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/dashboard/barbeiros/page.tsx`
+- `Design System para BarberPro/app/(dashboard)/dashboard/servicos/page.tsx`
+- `Design System para BarberPro/README.md`
+- `relatorio-status.md`
+- `relatorio-status.pdf`
+
+---
+
+*Relatorio atualizado automaticamente em 29/04/2026.*
