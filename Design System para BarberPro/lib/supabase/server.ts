@@ -2,9 +2,11 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { User } from "@supabase/supabase-js";
 import { z } from "zod";
 
 const GENERIC_AUTH_ERROR = "Nao foi possivel autenticar com as credenciais informadas.";
+const DEFAULT_BARBEARIA_ID = "00000000-0000-0000-0000-000000000001";
 
 const authPayloadSchema = z.object({
   email: z
@@ -63,6 +65,27 @@ export async function getAuthenticatedUser() {
   } = await supabase.auth.getUser();
 
   return user;
+}
+
+export async function ensureBootstrapProfile(user: User) {
+  const supabase = await createSupabaseServerClient();
+
+  const nomePadrao = user.email?.split("@")[0]?.trim() || "Administrador";
+
+  const { error } = await supabase.from("perfis").upsert(
+    {
+      id: user.id,
+      nome: nomePadrao,
+      cargo: "admin",
+      ativo: true,
+      barbearia_id: DEFAULT_BARBEARIA_ID,
+    },
+    { onConflict: "id" },
+  );
+
+  if (error) {
+    throw new Error("Nao foi possivel preparar o perfil administrativo do usuario.");
+  }
 }
 
 export async function signInWithPasswordAction(payload: unknown) {

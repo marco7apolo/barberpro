@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/app/ui/button";
-import { getAuthenticatedUser, signOutAction } from "@/lib/supabase/server";
+import {
+  ensureBootstrapProfile,
+  getAuthenticatedUser,
+  signOutAction,
+} from "@/lib/supabase/server";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -34,6 +38,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   if (!user) {
     redirect("/login");
   }
+
+  await ensureBootstrapProfile(user);
 
   async function handleSignOut() {
     "use server";
