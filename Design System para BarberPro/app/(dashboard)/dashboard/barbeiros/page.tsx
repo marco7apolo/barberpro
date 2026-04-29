@@ -33,10 +33,6 @@ export default async function BarbeirosPage() {
     .select("id, nome_exibicao, cpf, telefone, email, especialidades, comissao_percent, valor_minimo_servico, ativo")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error("Falha ao carregar barbeiros.");
-  }
-
   async function createBarbeiro(formData: FormData) {
     "use server";
 
@@ -156,6 +152,14 @@ export default async function BarbeirosPage() {
         <p className="text-muted-foreground">CRUD com schema real do Supabase e validacao Zod.</p>
       </div>
 
+      {error ? (
+        <Card>
+          <CardContent>
+            <p className="text-sm text-red-400">Erro ao carregar barbeiros: {error.message}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Novo barbeiro</CardTitle>
@@ -210,7 +214,7 @@ export default async function BarbeirosPage() {
       </Card>
 
       <div className="space-y-4">
-        {barbeiros?.map((barbeiro) => (
+        {(barbeiros ?? []).map((barbeiro) => (
           <Card key={barbeiro.id}>
             <CardContent>
               <form action={updateBarbeiro} className="grid grid-cols-1 gap-4 lg:grid-cols-5">

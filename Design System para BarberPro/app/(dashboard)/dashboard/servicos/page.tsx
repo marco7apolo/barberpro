@@ -41,18 +41,10 @@ export default async function ServicosPage() {
     .eq("ativo", true)
     .order("ordem_exibicao", { ascending: true });
 
-  if (categoriasError) {
-    throw new Error("Falha ao carregar categorias de servicos.");
-  }
-
   const { data: servicos, error } = await supabase
     .from("servicos")
     .select("id, categoria_id, nome, descricao, duracao_minutos, preco, preco_promocional, buffer_minutos, ativo")
     .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error("Falha ao carregar servicos.");
-  }
 
   const categoriasMap = new Map((categorias ?? []).map((c) => [c.id, c.nome]));
 
@@ -167,6 +159,24 @@ export default async function ServicosPage() {
         <p className="text-muted-foreground">CRUD com schema real do Supabase e validacao Zod.</p>
       </div>
 
+      {categoriasError ? (
+        <Card>
+          <CardContent>
+            <p className="text-sm text-red-400">
+              Erro ao carregar categorias: {categoriasError.message}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {error ? (
+        <Card>
+          <CardContent>
+            <p className="text-sm text-red-400">Erro ao carregar servicos: {error.message}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Novo servico</CardTitle>
@@ -232,7 +242,7 @@ export default async function ServicosPage() {
       </Card>
 
       <div className="space-y-4">
-        {servicos?.map((servico) => (
+        {(servicos ?? []).map((servico) => (
           <Card key={servico.id}>
             <CardContent>
               <form action={updateServico} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
