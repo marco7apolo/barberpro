@@ -33,6 +33,7 @@ export default async function DashboardPage() {
   const [
     { data: agendamentosHoje },
     { data: receitasHoje },
+    { data: receitasAcumuladas },
     { data: barbeirosAtivos },
     { data: barbeirosTotal },
     { data: proximosAgendamentos },
@@ -50,6 +51,11 @@ export default async function DashboardPage() {
       .eq("status", "pago")
       .gte("created_at", dayStartIso)
       .lte("created_at", dayEndIso),
+    supabase
+      .from("transacoes")
+      .select("valor")
+      .eq("tipo", "receita")
+      .eq("status", "pago"),
     supabase.from("barbeiros").select("id").eq("ativo", true),
     supabase.from("barbeiros").select("id"),
     supabase
@@ -83,10 +89,10 @@ export default async function DashboardPage() {
   const servicosMap = new Map((servicos ?? []).map((item) => [item.id, item.nome]));
 
   const faturamentoHoje = (receitasHoje ?? []).reduce((acc, row) => acc + Number(row.valor ?? 0), 0);
+  const faturamentoAcumulado = (receitasAcumuladas ?? []).reduce((acc, row) => acc + Number(row.valor ?? 0), 0);
   const agendamentosHojeCount = (agendamentosHoje ?? []).length;
   const ativosCount = (barbeirosAtivos ?? []).length;
   const totalBarbeirosCount = (barbeirosTotal ?? []).length;
-  const taxaOcupacao = ativosCount > 0 ? Math.min(100, Math.round((agendamentosHojeCount / ativosCount) * 100)) : 0;
 
   const kpis = [
     {
@@ -104,18 +110,18 @@ export default async function DashboardPage() {
       color: "text-green-500",
     },
     {
+      title: "Receita Acumulada",
+      value: toCurrencyBRL(faturamentoAcumulado),
+      change: "Total de todas as receitas",
+      icon: TrendingUp,
+      color: "text-amber-400",
+    },
+    {
       title: "Barbeiros Ativos",
       value: `${ativosCount}/${totalBarbeirosCount}`,
       change: "Status atual da equipe",
       icon: Users,
       color: "text-sky-400",
-    },
-    {
-      title: "Taxa de Ocupacao",
-      value: `${taxaOcupacao}%`,
-      change: "Agendamentos por barbeiro ativo",
-      icon: TrendingUp,
-      color: "text-amber-400",
     },
   ] as const;
 
@@ -193,6 +199,10 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Receita recebida hoje</span>
               <span className="text-green-500">{toCurrencyBRL(faturamentoHoje)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Receita acumulada total</span>
+              <span className="text-amber-400">{toCurrencyBRL(faturamentoAcumulado)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Barbeiros ativos</span>
