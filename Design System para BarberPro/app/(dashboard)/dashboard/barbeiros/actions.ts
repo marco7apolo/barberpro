@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -59,8 +58,7 @@ export async function createBarbeiro(formData: FormData) {
     throw new Error("Nao foi possivel salvar o barbeiro.");
   }
 
-  revalidatePath("/dashboard/barbeiros", "page");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/barbeiros", "layout");
 }
 
 export async function updateBarbeiro(formData: FormData) {
@@ -104,8 +102,7 @@ export async function updateBarbeiro(formData: FormData) {
     throw new Error("Nao foi possivel atualizar o barbeiro.");
   }
 
-  revalidatePath("/dashboard/barbeiros", "page");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/barbeiros", "layout");
 }
 
 export async function deleteBarbeiro(formData: FormData) {
@@ -127,6 +124,5 @@ export async function deleteBarbeiro(formData: FormData) {
     throw new Error("Nao foi possivel excluir o barbeiro.");
   }
 
-  revalidatePath("/dashboard/barbeiros", "page");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/barbeiros", "layout");
 }

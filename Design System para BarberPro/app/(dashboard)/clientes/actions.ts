@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -75,8 +74,7 @@ export async function createCliente(formData: FormData) {
     throw new Error("Nao foi possivel salvar o cliente.");
   }
 
-  revalidatePath("/clientes", "page");
-  redirect("/clientes");
+  revalidatePath("/clientes", "layout");
 }
 
 export async function updateCliente(formData: FormData) {
@@ -124,8 +122,7 @@ export async function updateCliente(formData: FormData) {
     throw new Error("Nao foi possivel atualizar o cliente.");
   }
 
-  revalidatePath("/clientes", "page");
-  redirect("/clientes");
+  revalidatePath("/clientes", "layout");
 }
 
 export async function deleteCliente(formData: FormData) {
@@ -147,6 +144,5 @@ export async function deleteCliente(formData: FormData) {
     throw new Error("Nao foi possivel excluir o cliente.");
   }
 
-  revalidatePath("/clientes", "page");
-  redirect("/clientes");
+  revalidatePath("/clientes", "layout");
 }

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -120,9 +119,8 @@ export async function createAgendamento(formData: FormData) {
     parsed.data.pago === "true",
   );
 
-  revalidatePath("/agendamentos", "page");
-  revalidatePath("/dashboard", "page");
-  redirect("/agendamentos");
+  revalidatePath("/agendamentos", "layout");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function updateAgendamento(formData: FormData) {
@@ -177,9 +175,8 @@ export async function updateAgendamento(formData: FormData) {
     parsed.data.pago === "true",
   );
 
-  revalidatePath("/agendamentos", "page");
-  revalidatePath("/dashboard", "page");
-  redirect("/agendamentos");
+  revalidatePath("/agendamentos", "layout");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function deleteAgendamento(formData: FormData) {
@@ -201,7 +198,6 @@ export async function deleteAgendamento(formData: FormData) {
     throw new Error("Nao foi possivel excluir o agendamento.");
   }
 
-  revalidatePath("/agendamentos", "page");
-  revalidatePath("/dashboard", "page");
-  redirect("/agendamentos");
+  revalidatePath("/agendamentos", "layout");
+  revalidatePath("/dashboard", "layout");
 }
