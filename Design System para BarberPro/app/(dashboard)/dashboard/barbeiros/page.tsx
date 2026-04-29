@@ -1,4 +1,7 @@
 ﻿import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { DollarSign } from "lucide-react";
+import Link from "next/link";
 import { z } from "zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
@@ -73,6 +76,7 @@ export default async function BarbeirosPage() {
     }
 
     revalidatePath("/dashboard/barbeiros");
+    redirect("/dashboard/barbeiros");
   }
 
   async function updateBarbeiro(formData: FormData) {
@@ -119,6 +123,7 @@ export default async function BarbeirosPage() {
     }
 
     revalidatePath("/dashboard/barbeiros");
+    redirect("/dashboard/barbeiros");
   }
 
   async function deleteBarbeiro(formData: FormData) {
@@ -143,6 +148,7 @@ export default async function BarbeirosPage() {
     }
 
     revalidatePath("/dashboard/barbeiros");
+    redirect("/dashboard/barbeiros");
   }
 
   return (
@@ -268,10 +274,17 @@ export default async function BarbeirosPage() {
                 </div>
               </form>
 
-              <form action={deleteBarbeiro} className="mt-3">
-                <input type="hidden" name="id" value={barbeiro.id} />
-                <Button type="submit" variant="outline" className="text-red-400">Excluir</Button>
-              </form>
+              <div className="mt-3 flex items-center gap-2">
+                <Link href={`/dashboard/barbeiros/${barbeiro.id}/receitas`}>
+                  <Button variant="outline" className="text-green-400 gap-2">
+                    <DollarSign className="h-4 w-4" /> Ver Receitas
+                  </Button>
+                </Link>
+                <form action={deleteBarbeiro}>
+                  <input type="hidden" name="id" value={barbeiro.id} />
+                  <Button type="submit" variant="outline" className="text-red-400">Excluir</Button>
+                </form>
+              </div>
             </CardContent>
           </Card>
         ))}

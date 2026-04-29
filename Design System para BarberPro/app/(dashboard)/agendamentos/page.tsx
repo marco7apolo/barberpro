@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
@@ -173,6 +174,7 @@ export default async function AgendamentosPage() {
 
     revalidatePath("/agendamentos");
     revalidatePath("/dashboard");
+    redirect("/agendamentos");
   }
 
   async function updateAgendamento(formData: FormData) {
@@ -231,6 +233,7 @@ export default async function AgendamentosPage() {
 
     revalidatePath("/agendamentos");
     revalidatePath("/dashboard");
+    redirect("/agendamentos");
   }
 
   async function deleteAgendamento(formData: FormData) {

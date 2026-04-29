@@ -1,4 +1,5 @@
 ﻿import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
@@ -90,6 +91,7 @@ export default async function ServicosPage() {
     }
 
     revalidatePath("/dashboard/servicos");
+    redirect("/dashboard/servicos");
   }
 
   async function updateServico(formData: FormData) {
@@ -131,6 +133,7 @@ export default async function ServicosPage() {
     }
 
     revalidatePath("/dashboard/servicos");
+    redirect("/dashboard/servicos");
   }
 
   async function deleteServico(formData: FormData) {
@@ -155,6 +158,7 @@ export default async function ServicosPage() {
     }
 
     revalidatePath("/dashboard/servicos");
+    redirect("/dashboard/servicos");
   }
 
   async function createCategoria(formData: FormData) {
@@ -188,6 +192,7 @@ export default async function ServicosPage() {
     }
 
     revalidatePath("/dashboard/servicos");
+    redirect("/dashboard/servicos");
   }
 
   const defaultCategoriaId = categorias?.[0]?.id ?? "";

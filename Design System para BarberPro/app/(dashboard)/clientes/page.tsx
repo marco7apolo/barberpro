@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
@@ -110,6 +111,7 @@ export default async function ClientesPage() {
     }
 
     revalidatePath("/clientes");
+    redirect("/clientes");
   }
 
   async function updateCliente(formData: FormData) {
@@ -160,6 +162,7 @@ export default async function ClientesPage() {
     }
 
     revalidatePath("/clientes");
+    redirect("/clientes");
   }
 
   async function deleteCliente(formData: FormData) {
