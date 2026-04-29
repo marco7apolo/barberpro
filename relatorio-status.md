@@ -3,7 +3,7 @@
 **Data:** 29 de Abril de 2026  
 **Projeto:** BarberPro - Sistema Web para Barbearia  
 **Contexto:** Projeto Integrador da Univesp  
-**Versao:** 1.0.0
+**Versao:** 1.1.0
 
 ---
 
@@ -158,6 +158,21 @@ barberpro/
 **Problema:** Erro "syncTransacao is not defined" ao criar/atualizar agendamentos. A funcao estava definida dentro do componente mas chamada por Server Actions.
 **Solucao:** Funcao syncTransacao movida para escopo do modulo (nivel de arquivo), acessivel pelas Server Actions.
 
+### Correcao 3: Cadastros sobrescrevendo/demorando para atualizar
+**Problema:** Apos criar ou editar registros (agendamentos, clientes, barbeiros, servicos), o formulario nao limpava e parecia sobrescrever o ultimo registro.
+**Solucao:** Adicionado redirect() apos cada operacao de create e update em todos os CRUDs, forcando um reload completo da pagina com dados frescos.
+
+### Correcao 4: Dashboard sem receita acumulada
+**Problema:** Dashboard mostrava apenas receita do dia, sem total acumulado de todas as receitas.
+**Solucao:** Adicionado KPI "Receita Acumulada" com query de todas as transacoes pagas, e atualizado card de estatisticas rapidas.
+
+### Nova Funcionalidade 1: Receitas por Barbeiro
+**Rota:** `/dashboard/barbeiros/[id]/receitas`
+- Pagina dedicada com receitas agrupadas por dia
+- Cards com receita total (pago), receita pendente e comissao estimada
+- Lista detalhada por dia com cliente, servico, horario, forma de pagamento e status
+- Link "Ver Receitas" adicionado em cada card de barbeiro na lista principal
+
 ---
 
 ## 6. Checklist UNIVESP
@@ -172,6 +187,8 @@ barberpro/
 | UI responsiva mobile-first dark | Pronto |
 | CRUD de Clientes | Pronto |
 | CRUD de Agendamentos | Pronto (corrigido) |
+| Dashboard com receita acumulada | Pronto |
+| Receitas por barbeiro | Pronto |
 | GitHub com commits semanticos | Pendente |
 
 ---
@@ -212,14 +229,14 @@ barberpro/
 ## 9. Proximos Passos
 
 ### Prioridade Alta
-1. Conectar Dashboard a dados reais do banco
-2. Finalizar webhook PIX (idempotencia, reconciliacao)
-3. Testes automatizados
+1. Finalizar webhook PIX (idempotencia, reconciliacao)
+2. Testes automatizados
 
 ### Prioridade Media
-4. Multi-tenant dinamico por dominio
-5. Tabela barbearias para gestao de tenants
-6. Calendario visual para agendamentos
+3. Multi-tenant dinamico por dominio
+4. Tabela barbearias para gestao de tenants
+5. Calendario visual para agendamentos
+6. Conectar Dashboard a dados reais (KPIs de ocupacao)
 
 ### Prioridade Baixa
 7. Commits semanticos no Git
