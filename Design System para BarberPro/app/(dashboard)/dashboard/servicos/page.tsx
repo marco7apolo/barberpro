@@ -25,6 +25,13 @@ const deleteSchema = z.object({
   id: z.string().uuid(),
 });
 
+const categoriaSchema = z.object({
+  nome: z.string().trim().min(2).max(80),
+  descricao: z.string().trim().max(200).optional().or(z.literal("")),
+  cor_badge: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
+  ordem_exibicao: z.coerce.number().int().min(0).max(999),
+});
+
 function toCurrencyBRL(valor: number) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -150,7 +157,41 @@ export default async function ServicosPage() {
     revalidatePath("/dashboard/servicos");
   }
 
+  async function createCategoria(formData: FormData) {
+    "use server";
+
+    const parsed = categoriaSchema.safeParse({
+      nome: formData.get("nome"),
+      descricao: formData.get("descricao"),
+      cor_badge: formData.get("cor_badge"),
+      ordem_exibicao: formData.get("ordem_exibicao"),
+    });
+
+    if (!parsed.success) {
+      throw new Error("Dados invalidos para cadastro de categoria.");
+    }
+
+    const actionSupabase = await createSupabaseServerClient();
+    const { error: insertError } = await actionSupabase.from("categorias_servicos").upsert(
+      {
+        nome: parsed.data.nome,
+        descricao: parsed.data.descricao ? parsed.data.descricao : null,
+        cor_badge: parsed.data.cor_badge,
+        ordem_exibicao: parsed.data.ordem_exibicao,
+        ativo: true,
+      },
+      { onConflict: "nome" },
+    );
+
+    if (insertError) {
+      throw new Error("Nao foi possivel salvar a categoria.");
+    }
+
+    revalidatePath("/dashboard/servicos");
+  }
+
   const defaultCategoriaId = categorias?.[0]?.id ?? "";
+  const hasCategorias = (categorias ?? []).length > 0;
 
   return (
     <div className="space-y-6">
@@ -179,9 +220,43 @@ export default async function ServicosPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Nova categoria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={createCategoria} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="categoria_nome">Nome</Label>
+              <Input id="categoria_nome" name="nome" required />
+            </div>
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="categoria_descricao">Descricao</Label>
+              <Input id="categoria_descricao" name="descricao" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoria_cor">Cor (hex)</Label>
+              <Input id="categoria_cor" name="cor_badge" defaultValue="#3b82f6" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoria_ordem">Ordem</Label>
+              <Input id="categoria_ordem" name="ordem_exibicao" type="number" min={0} max={999} defaultValue="1" required />
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" className="w-full">Criar categoria</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Novo servico</CardTitle>
         </CardHeader>
         <CardContent>
+          {!hasCategorias ? (
+            <p className="mb-4 text-sm text-amber-400">
+              Nenhuma categoria ativa encontrada. Crie ao menos uma categoria acima para cadastrar servicos.
+            </p>
+          ) : null}
           <form action={createServico} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="nome">Nome</Label>
@@ -193,6 +268,7 @@ export default async function ServicosPage() {
                 name="categoria_id"
                 required
                 defaultValue={defaultCategoriaId}
+                disabled={!hasCategorias}
                 className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:ring-[3px]"
               >
                 {categorias?.map((categoria) => (
@@ -235,7 +311,7 @@ export default async function ServicosPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <Button type="submit" className="w-full">Criar servico</Button>
+              <Button type="submit" className="w-full" disabled={!hasCategorias}>Criar servico</Button>
             </div>
           </form>
         </CardContent>
@@ -257,6 +333,7 @@ export default async function ServicosPage() {
                     name="categoria_id"
                     required
                     defaultValue={servico.categoria_id}
+                    disabled={!hasCategorias}
                     className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:ring-[3px]"
                   >
                     {categorias?.map((categoria) => (
@@ -299,7 +376,7 @@ export default async function ServicosPage() {
                   </select>
                 </div>
                 <div className="flex items-end">
-                  <Button type="submit" className="w-full">Salvar</Button>
+                  <Button type="submit" className="w-full" disabled={!hasCategorias}>Salvar</Button>
                 </div>
               </form>
 

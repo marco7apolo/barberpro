@@ -6,73 +6,73 @@
 
 ---
 
-## 1. Erro encontrado e motivo
+## 1. Erros encontrados nesta etapa
 
-Erro apresentado nas telas:
-- `Erro ao carregar agendamentos: infinite recursion detected in policy for relation "perfis"`
+1. `infinite recursion detected in policy for relation "barbeiros"`
+- Impacto: falha ao carregar/cadastrar em `barbeiros`, `clientes` e `agendamentos`.
+- Causa raiz: policy de `barbeiros` fazia subquery na propria tabela `barbeiros` dentro de `USING`, criando recursao de RLS.
 
-Causa raiz:
-- A policy da tabela `perfis` consultava a propria tabela `perfis` dentro do `USING/WITH CHECK`.
-- Quando outra tabela (ex.: `agendamentos`) avaliava policy com subquery em `perfis`, o Postgres precisava validar a policy de `perfis`, que por sua vez consultava `perfis` novamente, gerando recursao infinita (`42P17`).
+2. Servicos sem categorias no select
+- Impacto: nao era possivel criar servico (campo categoria obrigatorio vazio).
+- Causa raiz: ausencia de categorias ativas acessiveis para o usuario e falta de fluxo de criacao rapida na UI.
 
 ---
 
 ## 2. Correcao aplicada
 
-Arquivo SQL criado no projeto:
-- `Design System para BarberPro/supabase/migrations/20260429_fix_rls_perfis_recursion.sql`
+### 2.1 Fix de RLS (barbeiros/clientes/agendamentos/transacoes + categorias)
+Arquivo SQL novo:
+- `Design System para BarberPro/supabase/migrations/20260429_fix_rls_barbeiros_and_categorias.sql`
 
-O que esse fix faz:
-1. Cria funcao `public.is_admin_user()` com `SECURITY DEFINER` para verificar se o usuario autenticado e admin sem cair em recursao de RLS.
-2. Remove policies antigas de `perfis` (`perfis_read`, `perfis_admin_write`).
-3. Recria policies de `perfis` de forma segura:
-- `perfis_select_self_or_admin`
-- `perfis_insert_self_or_admin`
-- `perfis_update_self_or_admin`
-- `perfis_delete_admin_only`
+O que foi alterado:
+1. Criadas funcoes helper com `SECURITY DEFINER`:
+- `public.user_has_cargo(text[])`
+- `public.current_barbeiro_id()`
+2. Reescritas policies de `barbeiros` para remover auto-subquery recursiva.
+3. Reescritas policies de `clientes`, `agendamentos` e `transacoes` para usar helper seguro.
+4. Habilitado RLS em `categorias_servicos` com policies explicitas.
+5. Seed idempotente de categorias padrao.
+
+### 2.2 Ajuste da UI de Servicos
+Arquivo atualizado:
+- `Design System para BarberPro/app/(dashboard)/dashboard/servicos/page.tsx`
+
+O que foi alterado:
+1. Formulario de `Nova categoria` na propria tela de servicos.
+2. Aviso visual quando nao ha categorias ativas.
+3. Botao `Criar servico` desabilitado enquanto nao houver categoria valida.
 
 ---
 
 ## 3. Como aplicar no Supabase (passo a passo)
 
-1. Abra `Supabase Dashboard -> SQL Editor`.
-2. Clique em `New Query`.
-3. Cole o conteudo de:
-`Design System para BarberPro/supabase/migrations/20260429_fix_rls_perfis_recursion.sql`
-4. Execute `Run`.
-5. Recarregue a aplicacao em `http://localhost:3002` (ou porta atual).
-6. Teste novamente as abas `Agendamentos`, `Clientes`, `Barbeiros` e `Servicos`.
+1. Abrir `Supabase Dashboard -> SQL Editor`.
+2. Criar `New Query`.
+3. Colar e executar o arquivo:
+`Design System para BarberPro/supabase/migrations/20260429_fix_rls_barbeiros_and_categorias.sql`
+4. Recarregar o app (`http://localhost:3002` ou porta atual).
+5. Testar:
+- `Dashboard > Barbeiros`
+- `Clientes`
+- `Agendamentos`
+- `Dashboard > Servicos`
 
 ---
 
-## 4. Status atual dos modulos
+## 4. Validacao tecnica
 
-| Modulo | Status | Observacao |
-|---|---|---|
-| Auth + cookies HttpOnly | Pronto | Supabase SSR + middleware |
-| Dashboard | Pronto | Dados reais do banco |
-| CRUD Barbeiros | Pronto | Schema real |
-| CRUD Servicos | Pronto | Schema real + categorias |
-| CRUD Clientes | Pronto | Inclui LGPD em JSON |
-| CRUD Agendamentos | Pronto | Integrado com transacoes |
-| RLS + Policies | Corrigido | Fix para recursao em `perfis` adicionado |
-| Webhook PIX | Em progresso | Esqueleto pronto |
+Comando executado:
+- `npm run build`
+
+Resultado:
+- Build de producao concluido com sucesso.
 
 ---
 
-## 5. Validacao recomendada apos o fix
+## 5. Arquivos atualizados nesta etapa
 
-1. Entrar no sistema com usuario Auth.
-2. Abrir Dashboard e Agendamentos.
-3. Criar e editar um cliente.
-4. Criar e editar um agendamento.
-5. Confirmar no Supabase que `transacoes` foi sincronizada.
-
----
-
-## 6. Arquivos atualizados nesta correcao
-
-- `Design System para BarberPro/supabase/migrations/20260429_fix_rls_perfis_recursion.sql`
+- `Design System para BarberPro/supabase/migrations/20260429_fix_rls_barbeiros_and_categorias.sql`
+- `Design System para BarberPro/app/(dashboard)/dashboard/servicos/page.tsx`
 - `relatorio-status.md`
 - `relatorio-status.pdf`
 
