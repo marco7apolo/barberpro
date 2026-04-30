@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
 import { Badge } from "@/app/ui/badge";
-import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
+import { DateFilter } from "./DateFilter";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CalendarDays, DollarSign, Users, Scissors } from "lucide-react";
 
@@ -206,18 +206,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
 
       <Card>
         <CardContent>
-          <form action="/dashboard/relatorios" method="GET" className="flex items-end gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="data">Data do relatorio</Label>
-              <Input id="data" name="data" type="date" defaultValue={dateParam} />
-            </div>
-            <button
-              type="submit"
-              className="border-input focus-visible:border-ring focus-visible:ring-ring/50 inline-flex h-9 items-center justify-center rounded-md border bg-input-background px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-[3px] hover:bg-muted"
-            >
-              Filtrar
-            </button>
-          </form>
+          <DateFilter />
         </CardContent>
       </Card>
 
