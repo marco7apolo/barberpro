@@ -240,7 +240,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
       {/* Date selector */}
       <Card>
         <CardContent>
-          <form className="flex items-end gap-4">
+          <form action="/dashboard/relatorios" method="GET" className="flex items-end gap-4">
             <div className="space-y-2">
               <Label htmlFor="data">Data do relatorio</Label>
               <Input id="data" name="data" type="date" defaultValue={dateParam} />

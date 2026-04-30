@@ -35,6 +35,7 @@ export default async function ClientesPage() {
     .select(
       "id, nome, telefone, email, cpf, data_nascimento, observacoes, preferencias, consentimento_lgpd, criado_por, ativo",
     )
+    .eq("ativo", true)
     .order("created_at", { ascending: false });
 
   return (

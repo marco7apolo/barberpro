@@ -18,6 +18,7 @@ export default async function BarbeirosPage() {
   const { data: barbeiros, error } = await supabase
     .from("barbeiros")
     .select("id, nome_exibicao, cpf, telefone, email, especialidades, comissao_percent, valor_minimo_servico, ativo")
+    .eq("ativo", true)
     .order("created_at", { ascending: false });
 
   return (
