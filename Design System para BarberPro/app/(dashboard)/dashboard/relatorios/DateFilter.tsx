@@ -2,18 +2,17 @@
 
 import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export function DateFilter() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const currentDate = searchParams.get("data") ?? new Date().toISOString().split("T")[0];
   const [date, setDate] = useState(currentDate);
 
   function handleFilter(e: React.FormEvent) {
     e.preventDefault();
-    router.push(`/dashboard/relatorios?data=${date}`);
+    window.location.href = `/dashboard/relatorios?data=${date}`;
   }
 
   return (
