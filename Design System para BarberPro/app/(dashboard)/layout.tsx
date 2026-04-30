@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import {
   CalendarDays,
+  FileBarChart,
   LayoutDashboard,
   LogOut,
   Scissors,
@@ -30,6 +31,7 @@ const navigationItems = [
   { href: "/dashboard/servicos", label: "Servicos", icon: Scissors },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/agendamentos", label: "Agendamentos", icon: CalendarDays },
+  { href: "/dashboard/relatorios", label: "Relatorios", icon: FileBarChart },
 ] as const;
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {

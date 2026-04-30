@@ -138,9 +138,11 @@ export async function deleteCliente(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
+  // Soft delete: set ativo=false and record deletion timestamp
+  // This preserves appointments and transactions for historical reports
   const { error: deleteError } = await supabase
     .from("clientes")
-    .delete()
+    .update({ ativo: false, deleted_at: new Date().toISOString() })
     .eq("id", parsed.data.id);
 
   if (deleteError) {
