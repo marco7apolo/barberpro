@@ -166,15 +166,17 @@ barberpro/
 **Problema:** Dashboard mostrava apenas receita do dia, sem total acumulado de todas as receitas.
 **Solucao:** Adicionado KPI "Receita Acumulada" com query de todas as transacoes pagas, e atualizado card de estatisticas rapidas.
 
-### Correcao 5: Cadastros e exclusoes com dados stale (cache nao invalidado)
-**Problema:** Ao criar um barbeiro/cliente/agendamento novo, o registro nao aparecia na lista. Ao excluir, o registro errado desaparecia da tela. Era necessario sair e voltar para ver os dados corretos.
+### Correcao 5: Cadastros e exclusoes com dados stale (cache nao invalidado) e falta de feedback visual
+**Problema:** Ao criar um barbeiro/cliente/agendamento novo, o registro nao aparecia na lista. Ao excluir, o registro errado desaparecia da tela. Era necessario sair e voltar para ver os dados corretos. Alem disso, os botoes nao davam feedback visual durante operacoes.
 **Causa raiz:** `revalidatePath` do Next.js so invalida o cache para a proxima requisicao, mas a resposta do Server Action mantinha dados stale. `redirect()` dentro de Server Actions nao funciona corretamente com `<form action={...}>` em Server Components no Next.js 14.
 **Solucao:** Criado componente client `FormWithReload` que:
 - Intercepta o submit do formulario com `e.preventDefault()`
 - Executa a Server Action manualmente
 - Chama `window.location.reload()` para refresh completo da pagina
 - O mesmo padrao foi aplicado ao `DeleteButton` para exclusoes
-- Resultado: apos qualquer acao (criar, editar, excluir), a pagina recarrega com dados 100% atualizados do Supabase
+- Adicionado estado `pending` com desabilitacao do botao e texto "Salvando..." / "Excluindo..."
+- Previne duplo clique acidental em criacoes/exclusoes
+- Resultado: apos qualquer acao (criar, editar, excluir), a pagina recarrega com dados 100% atualizados do Supabase com feedback visual imediato
 
 ### Nova Funcionalidade 1: Receitas por Barbeiro
 **Rota:** `/dashboard/barbeiros/[id]/receitas`
