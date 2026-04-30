@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -75,6 +76,7 @@ export async function createCliente(formData: FormData) {
   }
 
   revalidatePath("/clientes", "layout");
+  redirect("/clientes");
 }
 
 export async function updateCliente(formData: FormData) {
@@ -123,6 +125,7 @@ export async function updateCliente(formData: FormData) {
   }
 
   revalidatePath("/clientes", "layout");
+  redirect("/clientes");
 }
 
 export async function deleteCliente(formData: FormData) {
@@ -145,4 +148,5 @@ export async function deleteCliente(formData: FormData) {
   }
 
   revalidatePath("/clientes", "layout");
+  redirect("/clientes");
 }

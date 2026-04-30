@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
-import { Button } from "@/app/ui/button";
 import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { DeleteButton, FormWithReload } from "../components/FormWithReload";
 import { createAgendamento, deleteAgendamento, updateAgendamento } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +78,7 @@ export default async function AgendamentosPage() {
           <CardTitle>Novo agendamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createAgendamento} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <FormWithReload action={createAgendamento} className="grid grid-cols-1 gap-4 lg:grid-cols-5" submitLabel="Criar agendamento" fullSpan>
             <div className="space-y-2">
               <Label>Cliente</Label>
               <select
@@ -187,10 +187,7 @@ export default async function AgendamentosPage() {
               <Label htmlFor="observacoes">Observacoes</Label>
               <Input id="observacoes" name="observacoes" />
             </div>
-            <div className="flex items-end">
-              <Button type="submit" className="w-full">Criar agendamento</Button>
-            </div>
-          </form>
+          </FormWithReload>
         </CardContent>
       </Card>
 
@@ -198,7 +195,7 @@ export default async function AgendamentosPage() {
         {(agendamentos ?? []).map((agendamento) => (
           <Card key={agendamento.id}>
             <CardContent>
-              <form action={updateAgendamento} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+              <FormWithReload action={updateAgendamento} className="grid grid-cols-1 gap-4 lg:grid-cols-5" submitLabel="Salvar">
                 <input type="hidden" name="id" value={agendamento.id} />
                 <div className="space-y-2">
                   <Label>Cliente</Label>
@@ -308,19 +305,13 @@ export default async function AgendamentosPage() {
                   <Label>Observacoes</Label>
                   <Input name="observacoes" defaultValue={agendamento.observacoes ?? ""} />
                 </div>
-                <div className="flex items-end">
-                  <Button type="submit" className="w-full">Salvar</Button>
-                </div>
-              </form>
+              </FormWithReload>
 
               <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                 <span>
                   Cliente: {clientesMap.get(agendamento.cliente_id) ?? "N/A"} | Barbeiro: {barbeirosMap.get(agendamento.barbeiro_id) ?? "N/A"} | Servico: {servicosMap.get(agendamento.servico_id) ?? "N/A"}
                 </span>
-                <form action={deleteAgendamento}>
-                  <input type="hidden" name="id" value={agendamento.id} />
-                  <Button type="submit" variant="outline" className="text-red-400">Excluir</Button>
-                </form>
+                <DeleteButton action={deleteAgendamento} recordId={agendamento.id} />
               </div>
             </CardContent>
           </Card>

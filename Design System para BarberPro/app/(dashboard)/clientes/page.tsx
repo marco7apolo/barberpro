@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card";
-import { Button } from "@/app/ui/button";
 import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { DeleteButton, FormWithReload } from "../components/FormWithReload";
 import { createCliente, deleteCliente, updateCliente } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +57,7 @@ export default async function ClientesPage() {
           <CardTitle>Novo cliente</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createCliente} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <FormWithReload action={createCliente} className="grid grid-cols-1 gap-4 lg:grid-cols-5" submitLabel="Criar cliente" fullSpan>
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="nome">Nome</Label>
               <Input id="nome" name="nome" required />
@@ -134,10 +134,7 @@ export default async function ClientesPage() {
                 <option value="false">Inativo</option>
               </select>
             </div>
-            <div className="flex items-end">
-              <Button type="submit" className="w-full">Criar cliente</Button>
-            </div>
-          </form>
+          </FormWithReload>
         </CardContent>
       </Card>
 
@@ -151,7 +148,7 @@ export default async function ClientesPage() {
           return (
             <Card key={cliente.id}>
               <CardContent>
-                <form action={updateCliente} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+                <FormWithReload action={updateCliente} className="grid grid-cols-1 gap-4 lg:grid-cols-5" submitLabel="Salvar">
                   <input type="hidden" name="id" value={cliente.id} />
                   <div className="space-y-2 lg:col-span-2">
                     <Label>Nome</Label>
@@ -229,15 +226,11 @@ export default async function ClientesPage() {
                       <option value="false">Inativo</option>
                     </select>
                   </div>
-                  <div className="flex items-end">
-                    <Button type="submit" className="w-full">Salvar</Button>
-                  </div>
-                </form>
+                </FormWithReload>
 
-                <form action={deleteCliente} className="mt-3">
-                  <input type="hidden" name="id" value={cliente.id} />
-                  <Button type="submit" variant="outline" className="text-red-400">Excluir</Button>
-                </form>
+                <div className="mt-3">
+                  <DeleteButton action={deleteCliente} recordId={cliente.id} />
+                </div>
               </CardContent>
             </Card>
           );

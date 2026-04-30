@@ -7,6 +7,7 @@ import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { DeleteButton, FormWithReload } from "../../components/FormWithReload";
 import { createBarbeiro, deleteBarbeiro, updateBarbeiro } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function BarbeirosPage() {
           <CardTitle>Novo barbeiro</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createBarbeiro} className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+          <FormWithReload action={createBarbeiro} className="grid grid-cols-1 gap-4 lg:grid-cols-4" submitLabel="Criar barbeiro" fullSpan>
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="nome_exibicao">Nome de exibicao</Label>
               <Input id="nome_exibicao" name="nome_exibicao" required />
@@ -80,10 +81,7 @@ export default async function BarbeirosPage() {
                 <option value="false">Inativo</option>
               </select>
             </div>
-            <div className="flex items-end">
-              <Button type="submit" className="w-full">Criar barbeiro</Button>
-            </div>
-          </form>
+          </FormWithReload>
         </CardContent>
       </Card>
 
@@ -91,7 +89,7 @@ export default async function BarbeirosPage() {
         {(barbeiros ?? []).map((barbeiro) => (
           <Card key={barbeiro.id}>
             <CardContent>
-              <form action={updateBarbeiro} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+              <FormWithReload action={updateBarbeiro} className="grid grid-cols-1 gap-4 lg:grid-cols-5" submitLabel="Salvar">
                 <input type="hidden" name="id" value={barbeiro.id} />
                 <div className="space-y-2">
                   <Label>Nome de exibicao</Label>
@@ -137,10 +135,7 @@ export default async function BarbeirosPage() {
                     <option value="false">Inativo</option>
                   </select>
                 </div>
-                <div className="flex items-end gap-2">
-                  <Button type="submit" className="flex-1">Salvar</Button>
-                </div>
-              </form>
+              </FormWithReload>
 
               <div className="mt-3 flex items-center gap-2">
                 <Link href={`/dashboard/barbeiros/${barbeiro.id}/receitas`}>
@@ -148,10 +143,7 @@ export default async function BarbeirosPage() {
                     <DollarSign className="h-4 w-4" /> Ver Receitas
                   </Button>
                 </Link>
-                <form action={deleteBarbeiro}>
-                  <input type="hidden" name="id" value={barbeiro.id} />
-                  <Button type="submit" variant="outline" className="text-red-400">Excluir</Button>
-                </form>
+                <DeleteButton action={deleteBarbeiro} recordId={barbeiro.id} />
               </div>
             </CardContent>
           </Card>

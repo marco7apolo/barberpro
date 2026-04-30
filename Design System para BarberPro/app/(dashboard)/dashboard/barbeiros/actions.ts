@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -59,6 +60,7 @@ export async function createBarbeiro(formData: FormData) {
   }
 
   revalidatePath("/dashboard/barbeiros", "layout");
+  redirect("/dashboard/barbeiros");
 }
 
 export async function updateBarbeiro(formData: FormData) {
@@ -103,6 +105,7 @@ export async function updateBarbeiro(formData: FormData) {
   }
 
   revalidatePath("/dashboard/barbeiros", "layout");
+  redirect("/dashboard/barbeiros");
 }
 
 export async function deleteBarbeiro(formData: FormData) {
@@ -125,4 +128,5 @@ export async function deleteBarbeiro(formData: FormData) {
   }
 
   revalidatePath("/dashboard/barbeiros", "layout");
+  redirect("/dashboard/barbeiros");
 }
