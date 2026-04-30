@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/app/ui/button";
@@ -19,19 +20,25 @@ export function FormWithReload({
   submitLabel = "Enviar",
   fullSpan = false,
 }: FormWithReloadProps) {
+  const [pending, setPending] = useState(false);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    await action(formData);
-    window.location.reload();
+    setPending(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      await action(formData);
+    } finally {
+      window.location.reload();
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className={className}>
       {children}
       <div className={fullSpan ? "flex items-end" : ""}>
-        <Button type="submit" className={fullSpan ? "w-full" : ""} disabled={false}>
-          {submitLabel}
+        <Button type="submit" className={fullSpan ? "w-full" : ""} disabled={pending}>
+          {pending ? "Salvando..." : submitLabel}
         </Button>
       </div>
     </form>
@@ -45,16 +52,23 @@ interface DeleteButtonProps {
 }
 
 export function DeleteButton({ action, recordId, label = "Excluir" }: DeleteButtonProps) {
+  const [pending, setPending] = useState(false);
+
   async function handleDelete() {
-    const formData = new FormData();
-    formData.set("id", recordId);
-    await action(formData);
-    window.location.reload();
+    if (pending) return;
+    setPending(true);
+    try {
+      const formData = new FormData();
+      formData.set("id", recordId);
+      await action(formData);
+    } finally {
+      window.location.reload();
+    }
   }
 
   return (
-    <Button type="button" onClick={handleDelete} variant="outline" className="text-red-400">
-      {label}
+    <Button type="button" onClick={handleDelete} variant="outline" className="text-red-400" disabled={pending}>
+      {pending ? "Excluindo..." : label}
     </Button>
   );
 }
