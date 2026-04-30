@@ -2,17 +2,19 @@
 
 import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export function DateFilter() {
-  const searchParams = useSearchParams();
-  const currentDate = searchParams.get("data") ?? new Date().toISOString().split("T")[0];
-  const [date, setDate] = useState(currentDate);
+  const today = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("data") ?? new Date().toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0];
+
+  const [date, setDate] = useState(today);
 
   function handleFilter(e: React.FormEvent) {
     e.preventDefault();
-    window.location.href = `/dashboard/relatorios?data=${date}`;
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "/dashboard/relatorios";
+    window.location.href = `${currentPath}?data=${date}`;
   }
 
   return (

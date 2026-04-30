@@ -118,15 +118,13 @@ export async function deleteBarbeiro(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
-  // Soft delete: set ativo=false and record deletion timestamp
-  // This preserves appointments and transactions for historical reports
   const { error: deleteError } = await supabase
     .from("barbeiros")
-    .update({ ativo: false, deleted_at: new Date().toISOString() })
+    .delete()
     .eq("id", parsed.data.id);
 
   if (deleteError) {
-    throw new Error("Nao foi possivel excluir o barbeiro.");
+    throw new Error(`Nao foi possivel excluir o barbeiro. Erro: ${deleteError.message}`);
   }
 
   revalidatePath("/dashboard/barbeiros", "layout");

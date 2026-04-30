@@ -57,22 +57,12 @@ function getPagamentoLabel(forma: string | null) {
   return labels[forma] ?? forma;
 }
 
-function getStartOfDay(dateStr: string) {
-  const date = new Date(dateStr);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-}
-
-function getEndOfDay(dateStr: string) {
-  const date = new Date(dateStr);
-  date.setHours(23, 59, 59, 999);
-  return date.toISOString();
-}
-
 export default async function RelatorioDiarioPage({ searchParams }: { searchParams: { data?: string } }) {
   const dateParam = searchParams.data ?? new Date().toISOString().split("T")[0];
-  const startOfDay = getStartOfDay(dateParam);
-  const endOfDay = getEndOfDay(dateParam);
+
+  const [year, month, day] = dateParam.split("-").map(Number);
+  const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0)).toISOString();
+  const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
 
   const supabase = await createSupabaseServerClient();
 
@@ -81,6 +71,11 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
     .select("id, nome_exibicao, comissao_percent, ativo")
     .order("nome_exibicao", { ascending: true });
 
+  const barbeirosMap = new Map<string, { nome: string; ativo: boolean }>();
+  for (const b of barbeiros ?? []) {
+    barbeirosMap.set(b.id, { nome: b.nome_exibicao, ativo: b.ativo });
+  }
+
   const { data: agendamentosDoDia } = await supabase
     .from("agendamentos")
     .select("id, barbeiro_id, cliente_id, servico_id, data_inicio, data_fim, status, valor_total, gorjeta, forma_pagamento, pago, observacoes")
@@ -88,16 +83,14 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
     .lte("data_inicio", endOfDay)
     .order("data_inicio", { ascending: true });
 
+  const { data: transacoesDoDia } = await supabase
+    .from("transacoes")
+    .select("id, agendamento_id, valor, forma_pagamento, status")
+    .eq("tipo", "receita")
+    .gte("created_at", startOfDay)
+    .lte("created_at", endOfDay);
+
   const agendamentoIds = (agendamentosDoDia ?? []).map((a) => a.id).filter(Boolean);
-
-  const { data: transacoes } = agendamentoIds.length > 0
-    ? await supabase
-        .from("transacoes")
-        .select("id, agendamento_id, valor, forma_pagamento, status")
-        .eq("tipo", "receita")
-        .in("agendamento_id", agendamentoIds)
-    : { data: [] };
-
   const clienteIds = Array.from(new Set((agendamentosDoDia ?? []).map((a) => a.cliente_id).filter(Boolean)));
   const servicoIds = Array.from(new Set((agendamentosDoDia ?? []).map((a) => a.servico_id).filter(Boolean)));
 
@@ -141,22 +134,22 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
 
   for (const ag of agendamentosDoDia ?? []) {
     const barbeiroId = ag.barbeiro_id;
-    if (!barbeiroId) continue;
+    const barbeiroInfo = barbeiroId ? barbeirosMap.get(barbeiroId) : null;
+    const barberKey = barbeiroId ?? "deleted";
 
-    let barberRev = revenueByBarber.get(barbeiroId);
-    if (!barberRev) {
-      barberRev = {
-        id: barbeiroId,
-        nome: "Barbeiro removido",
+    if (!revenueByBarber.has(barberKey)) {
+      revenueByBarber.set(barberKey, {
+        id: barberKey,
+        nome: "(Barbeiro excluido)",
         ativo: false,
         receitaPago: 0,
         receitaPendente: 0,
         countPago: 0,
         countPendente: 0,
-      };
-      revenueByBarber.set(barbeiroId, barberRev);
+      });
     }
 
+    const barberRev = revenueByBarber.get(barberKey)!;
     const valor = Number(ag.valor_total ?? 0);
     const gorjeta = Number(ag.gorjeta ?? 0);
 
@@ -177,12 +170,12 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
     .gte("created_at", startOfDay)
     .lte("created_at", endOfDay);
 
-  const { count: clientesExcluidosCount } = await supabase
-    .from("clientes")
+  const { count: agendamentosSemBarbeiroCount } = await supabase
+    .from("agendamentos")
     .select("*", { count: "exact", head: true })
-    .eq("ativo", false)
-    .gte("deleted_at", startOfDay)
-    .lte("deleted_at", endOfDay);
+    .is("barbeiro_id", null)
+    .gte("updated_at", startOfDay)
+    .lte("updated_at", endOfDay);
 
   const { count: barbeirosAdicionadosCount } = await supabase
     .from("barbeiros")
@@ -190,12 +183,12 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
     .gte("created_at", startOfDay)
     .lte("created_at", endOfDay);
 
-  const { count: barbeirosExcluidosCount } = await supabase
-    .from("barbeiros")
+  const { count: agendamentosSemClienteCount } = await supabase
+    .from("agendamentos")
     .select("*", { count: "exact", head: true })
-    .eq("ativo", false)
-    .gte("deleted_at", startOfDay)
-    .lte("deleted_at", endOfDay);
+    .is("cliente_id", null)
+    .gte("updated_at", startOfDay)
+    .lte("updated_at", endOfDay);
 
   return (
     <div className="space-y-6">
@@ -252,9 +245,9 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
                 <p className="text-sm text-muted-foreground">Clientes</p>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-semibold text-green-500">+{clientesAdicionadosCount ?? 0}</p>
-                  <p className="text-lg font-semibold text-red-400">-{clientesExcluidosCount ?? 0}</p>
+                  <p className="text-lg font-semibold text-red-400">-{agendamentosSemClienteCount ?? 0}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Adicionados / Excluidos</p>
+                <p className="text-xs text-muted-foreground">Adicionados / Vinculos perdidos</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-blue-400">
                 <Users size={24} />
@@ -270,9 +263,9 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
                 <p className="text-sm text-muted-foreground">Barbeiros</p>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-semibold text-green-500">+{barbeirosAdicionadosCount ?? 0}</p>
-                  <p className="text-lg font-semibold text-red-400">-{barbeirosExcluidosCount ?? 0}</p>
+                  <p className="text-lg font-semibold text-red-400">-{agendamentosSemBarbeiroCount ?? 0}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Adicionados / Excluidos</p>
+                <p className="text-xs text-muted-foreground">Adicionados / Vinculos perdidos</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-purple-400">
                 <Scissors size={24} />
@@ -299,9 +292,6 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
                   <div>
                     <p className="text-sm font-medium">
                       {barber.nome}
-                      {!barber.ativo && (
-                        <span className="ml-2 text-xs text-muted-foreground">(excluido)</span>
-                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {barber.countPago} pago(s) | {barber.countPendente} pendente(s)
@@ -329,7 +319,10 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
         <CardContent>
           <div className="space-y-3">
             {(agendamentosDoDia ?? []).map((ag) => {
-              const barbeiroNome = (barbeiros ?? []).find((b) => b.id === ag.barbeiro_id)?.nome_exibicao ?? "N/A";
+              const barbeiroInfo = ag.barbeiro_id ? barbeirosMap.get(ag.barbeiro_id) : null;
+              const barbeiroNome = ag.barbeiro_id
+                ? (barbeiroInfo?.nome ?? "N/A")
+                : "(Barbeiro excluido)";
               const clienteNome = clienteMap.get(ag.cliente_id ?? "") ?? "N/A";
               const servicoNome = servicoMap.get(ag.servico_id ?? "") ?? "N/A";
 
