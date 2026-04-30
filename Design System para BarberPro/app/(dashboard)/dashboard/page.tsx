@@ -35,7 +35,6 @@ export default async function DashboardPage() {
     { data: receitasHoje },
     { data: receitasAcumuladas },
     { data: barbeirosAtivos },
-    { data: barbeirosTotal },
     { data: proximosAgendamentos },
     { data: servicos },
   ] = await Promise.all([
@@ -57,7 +56,6 @@ export default async function DashboardPage() {
       .eq("tipo", "receita")
       .eq("status", "pago"),
     supabase.from("barbeiros").select("id").eq("ativo", true),
-    supabase.from("barbeiros").select("id"),
     supabase
       .from("agendamentos")
       .select("id, status, cliente_id, barbeiro_id, servico_id, data_inicio")
@@ -92,7 +90,6 @@ export default async function DashboardPage() {
   const faturamentoAcumulado = (receitasAcumuladas ?? []).reduce((acc, row) => acc + Number(row.valor ?? 0), 0);
   const agendamentosHojeCount = (agendamentosHoje ?? []).length;
   const ativosCount = (barbeirosAtivos ?? []).length;
-  const totalBarbeirosCount = (barbeirosTotal ?? []).length;
 
   const kpis = [
     {
@@ -118,8 +115,8 @@ export default async function DashboardPage() {
     },
     {
       title: "Barbeiros Ativos",
-      value: `${ativosCount}/${totalBarbeirosCount}`,
-      change: "Status atual da equipe",
+      value: `${ativosCount}`,
+      change: "Ativos no momento",
       icon: Users,
       color: "text-sky-400",
     },

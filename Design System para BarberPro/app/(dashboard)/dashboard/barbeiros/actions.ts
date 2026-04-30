@@ -56,7 +56,7 @@ export async function createBarbeiro(formData: FormData) {
   });
 
   if (insertError) {
-    throw new Error("Nao foi possivel salvar o barbeiro.");
+    throw new Error(`Nao foi possivel salvar o barbeiro. Erro: ${insertError.message}`);
   }
 
   revalidatePath("/dashboard/barbeiros", "layout");
