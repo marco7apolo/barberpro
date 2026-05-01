@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card"
 import { Badge } from "@/app/ui/badge";
 import { Label } from "@/app/ui/label";
 import { DateFilter } from "./DateFilter";
+import { Button } from "@/app/ui/button";
+import { FileDown, CalendarDays, DollarSign, Users, Scissors } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { CalendarDays, DollarSign, Users, Scissors } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -11,17 +12,6 @@ function toCurrencyBRL(valor: number) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
-  });
-}
-
-function formatDateBR(dateStr: string) {
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "--";
-  return date.toLocaleDateString("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
   });
 }
 
@@ -57,38 +47,30 @@ function getPagamentoLabel(forma: string | null) {
   return labels[forma] ?? forma;
 }
 
+interface BarberRevenue {
+  nome: string;
+  ativo: boolean;
+  receitaPago: number;
+  receitaPendente: number;
+  countPago: number;
+  countPendente: number;
+}
+
 export default async function RelatorioDiarioPage({ searchParams }: { searchParams: { data?: string } }) {
   const dateParam = searchParams.data ?? new Date().toISOString().split("T")[0];
-
-  const [year, month, day] = dateParam.split("-").map(Number);
-  const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0)).toISOString();
-  const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
-
   const supabase = await createSupabaseServerClient();
+
+  const { data: agendamentosDoDia } = await supabase
+    .from("agendamentos")
+    .select("id, barbeiro_id, cliente_id, servico_id, data_inicio, data_fim, status, valor_total, gorjeta, forma_pagamento, pago, observacoes")
+    .gte("data_inicio", dateParam)
+    .lt("data_inicio", new Date(new Date(dateParam).getTime() + 86400000).toISOString())
+    .order("data_inicio", { ascending: true });
 
   const { data: barbeiros } = await supabase
     .from("barbeiros")
     .select("id, nome_exibicao, comissao_percent, ativo")
     .order("nome_exibicao", { ascending: true });
-
-  const barbeirosMap = new Map<string, { nome: string; ativo: boolean }>();
-  for (const b of barbeiros ?? []) {
-    barbeirosMap.set(b.id, { nome: b.nome_exibicao, ativo: b.ativo });
-  }
-
-  const { data: agendamentosDoDia } = await supabase
-    .from("agendamentos")
-    .select("id, barbeiro_id, cliente_id, servico_id, data_inicio, data_fim, status, valor_total, gorjeta, forma_pagamento, pago, observacoes")
-    .gte("data_inicio", startOfDay)
-    .lte("data_inicio", endOfDay)
-    .order("data_inicio", { ascending: true });
-
-  const { data: transacoesDoDia } = await supabase
-    .from("transacoes")
-    .select("id, agendamento_id, valor, forma_pagamento, status")
-    .eq("tipo", "receita")
-    .gte("created_at", startOfDay)
-    .lte("created_at", endOfDay);
 
   const agendamentoIds = (agendamentosDoDia ?? []).map((a) => a.id).filter(Boolean);
   const clienteIds = Array.from(new Set((agendamentosDoDia ?? []).map((a) => a.cliente_id).filter(Boolean)));
@@ -105,43 +87,26 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
 
   const clienteMap = new Map((clientes ?? []).map((c) => [c.id, c.nome]));
   const servicoMap = new Map((servicos ?? []).map((s) => [s.id, s.nome]));
-
-  interface BarberRevenue {
-    id: string;
-    nome: string;
-    ativo: boolean;
-    receitaPago: number;
-    receitaPendente: number;
-    countPago: number;
-    countPendente: number;
+  const barbeirosMap = new Map<string, string>();
+  for (const b of barbeiros ?? []) {
+    barbeirosMap.set(b.id, b.nome_exibicao);
   }
 
   const revenueByBarber = new Map<string, BarberRevenue>();
-  for (const barbeiro of barbeiros ?? []) {
-    revenueByBarber.set(barbeiro.id, {
-      id: barbeiro.id,
-      nome: barbeiro.nome_exibicao,
-      ativo: barbeiro.ativo,
-      receitaPago: 0,
-      receitaPendente: 0,
-      countPago: 0,
-      countPendente: 0,
-    });
-  }
 
   let receitaTotalGeral = 0;
   let receitaPendenteGeral = 0;
+  let countPago = 0;
+  let countPendente = 0;
 
   for (const ag of agendamentosDoDia ?? []) {
     const barbeiroId = ag.barbeiro_id;
-    const barbeiroInfo = barbeiroId ? barbeirosMap.get(barbeiroId) : null;
-    const barberKey = barbeiroId ?? "deleted";
+    const nome = barbeiroId ? (barbeirosMap.get(barbeiroId) ?? "(Barbeiro excluido)") : "(Barbeiro excluido)";
 
-    if (!revenueByBarber.has(barberKey)) {
-      revenueByBarber.set(barberKey, {
-        id: barberKey,
-        nome: "(Barbeiro excluido)",
-        ativo: false,
+    if (!revenueByBarber.has(barbeiroId ?? "deleted")) {
+      revenueByBarber.set(barbeiroId ?? "deleted", {
+        nome,
+        ativo: !!barbeiroId && (barbeiros ?? []).some((b) => b.id === barbeiroId && b.ativo),
         receitaPago: 0,
         receitaPendente: 0,
         countPago: 0,
@@ -149,55 +114,65 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
       });
     }
 
-    const barberRev = revenueByBarber.get(barberKey)!;
+    const barberRev = revenueByBarber.get(barbeiroId ?? "deleted")!;
     const valor = Number(ag.valor_total ?? 0);
     const gorjeta = Number(ag.gorjeta ?? 0);
 
     if (ag.pago) {
       barberRev.receitaPago += valor + gorjeta;
       barberRev.countPago++;
+      countPago++;
       receitaTotalGeral += valor + gorjeta;
     } else {
       barberRev.receitaPendente += valor + gorjeta;
       barberRev.countPendente++;
+      countPendente++;
       receitaPendenteGeral += valor + gorjeta;
     }
   }
 
-  const { count: clientesAdicionadosCount } = await supabase
-    .from("clientes")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", startOfDay)
-    .lte("created_at", endOfDay);
-
-  const { count: agendamentosSemBarbeiroCount } = await supabase
-    .from("agendamentos")
-    .select("*", { count: "exact", head: true })
-    .is("barbeiro_id", null)
-    .gte("updated_at", startOfDay)
-    .lte("updated_at", endOfDay);
-
   const { count: barbeirosAdicionadosCount } = await supabase
     .from("barbeiros")
     .select("*", { count: "exact", head: true })
-    .gte("created_at", startOfDay)
-    .lte("created_at", endOfDay);
+    .gte("created_at", dateParam)
+    .lt("created_at", new Date(new Date(dateParam).getTime() + 86400000).toISOString());
 
-  const { count: agendamentosSemClienteCount } = await supabase
-    .from("agendamentos")
+  const { count: barbeirosExcluidosCount } = await supabase
+    .from("barbeiros")
+    .select("*", { count: "exact", head: true })
+    .is("barbeiro_id", null)
+    .gte("updated_at", dateParam)
+    .lt("updated_at", new Date(new Date(dateParam).getTime() + 86400000).toISOString());
+
+  const { count: clientesAdicionadosCount } = await supabase
+    .from("clientes")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", dateParam)
+    .lt("created_at", new Date(new Date(dateParam).getTime() + 86400000).toISOString());
+
+  const { count: clientesExcluidosCount } = await supabase
+    .from("clientes")
     .select("*", { count: "exact", head: true })
     .is("cliente_id", null)
-    .gte("updated_at", startOfDay)
-    .lte("updated_at", endOfDay);
+    .gte("updated_at", dateParam)
+    .lt("updated_at", new Date(new Date(dateParam).getTime() + 86400000).toISOString());
+
+  const totalAdicionados = (barbeirosAdicionadosCount ?? 0) + (clientesAdicionadosCount ?? 0);
+  const totalExcluidos = (barbeirosExcluidosCount ?? 0) + (clientesExcluidosCount ?? 0);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold text-primary">Relatorio Diario</h1>
-        <p className="text-muted-foreground">Visao completa de receitas, agendamentos e movimentacoes do dia.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold text-primary">Relatorio Diario</h1>
+          <p className="text-muted-foreground">Visao completa de receitas, agendamentos e movimentacoes do dia.</p>
+        </div>
+        <Button variant="outline" className="gap-2 print:hidden" onClick={() => window.print()}>
+          <FileDown className="h-4 w-4" /> Exportar PDF
+        </Button>
       </div>
 
-      <Card>
+      <Card className="print:hidden">
         <CardContent>
           <DateFilter />
         </CardContent>
@@ -210,9 +185,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
               <div>
                 <p className="text-sm text-muted-foreground">Receita Total (pago)</p>
                 <p className="text-2xl font-semibold text-green-500">{toCurrencyBRL(receitaTotalGeral)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {Array.from(revenueByBarber.values()).reduce((acc, b) => acc + b.countPago, 0)} transacoes pagas
-                </p>
+                <p className="text-xs text-muted-foreground">{countPago} transacoes pagas</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-green-500">
                 <DollarSign size={24} />
@@ -227,9 +200,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
               <div>
                 <p className="text-sm text-muted-foreground">Receita Pendente</p>
                 <p className="text-2xl font-semibold text-yellow-400">{toCurrencyBRL(receitaPendenteGeral)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {Array.from(revenueByBarber.values()).reduce((acc, b) => acc + b.countPendente, 0)} transacoes pendentes
-                </p>
+                <p className="text-xs text-muted-foreground">{countPendente} transacoes pendentes</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-yellow-400">
                 <CalendarDays size={24} />
@@ -242,12 +213,12 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
           <CardContent>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Clientes</p>
+                <p className="text-sm text-muted-foreground">Registros</p>
                 <div className="flex items-center gap-3">
-                  <p className="text-lg font-semibold text-green-500">+{clientesAdicionadosCount ?? 0}</p>
-                  <p className="text-lg font-semibold text-red-400">-{agendamentosSemClienteCount ?? 0}</p>
+                  <p className="text-lg font-semibold text-green-500">+{totalAdicionados}</p>
+                  <p className="text-lg font-semibold text-red-400">-{totalExcluidos}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Adicionados / Vinculos perdidos</p>
+                <p className="text-xs text-muted-foreground">Adicionados / Excluidos</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-blue-400">
                 <Users size={24} />
@@ -260,12 +231,9 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
           <CardContent>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Barbeiros</p>
-                <div className="flex items-center gap-3">
-                  <p className="text-lg font-semibold text-green-500">+{barbeirosAdicionadosCount ?? 0}</p>
-                  <p className="text-lg font-semibold text-red-400">-{agendamentosSemBarbeiroCount ?? 0}</p>
-                </div>
-                <p className="text-xs text-muted-foreground">Adicionados / Vinculos perdidos</p>
+                <p className="text-sm text-muted-foreground">Barbeiros Novos</p>
+                <p className="text-2xl font-semibold text-purple-400">+{barbeirosAdicionadosCount ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Cadastrados no dia</p>
               </div>
               <div className="rounded-lg bg-muted p-3 text-purple-400">
                 <Scissors size={24} />
@@ -284,15 +252,13 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
             {Array.from(revenueByBarber.values())
               .filter((b) => b.receitaPago > 0 || b.receitaPendente > 0)
               .sort((a, b) => b.receitaPago - a.receitaPago)
-              .map((barber) => (
+              .map((barber, idx) => (
                 <div
-                  key={barber.id}
+                  key={idx}
                   className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3"
                 >
                   <div>
-                    <p className="text-sm font-medium">
-                      {barber.nome}
-                    </p>
+                    <p className="text-sm font-medium">{barber.nome}</p>
                     <p className="text-xs text-muted-foreground">
                       {barber.countPago} pago(s) | {barber.countPendente} pendente(s)
                     </p>
@@ -314,15 +280,12 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
 
       <Card>
         <CardHeader>
-          <CardTitle>Agendamentos do Dia ({formatDateBR(dateParam)})</CardTitle>
+          <CardTitle>Agendamentos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {(agendamentosDoDia ?? []).map((ag) => {
-              const barbeiroInfo = ag.barbeiro_id ? barbeirosMap.get(ag.barbeiro_id) : null;
-              const barbeiroNome = ag.barbeiro_id
-                ? (barbeiroInfo?.nome ?? "N/A")
-                : "(Barbeiro excluido)";
+              const barbeiroNome = ag.barbeiro_id ? (barbeirosMap.get(ag.barbeiro_id) ?? "(Barbeiro excluido)") : "(Barbeiro excluido)";
               const clienteNome = clienteMap.get(ag.cliente_id ?? "") ?? "N/A";
               const servicoNome = servicoMap.get(ag.servico_id ?? "") ?? "N/A";
 
@@ -366,7 +329,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
               );
             })}
             {(agendamentosDoDia ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum agendamento neste dia.</p>
+              <p className="text-sm text-muted-foreground">Nenhum agendamento encontrado para esta data.</p>
             )}
           </div>
         </CardContent>

@@ -32,8 +32,7 @@ export default async function AgendamentosPage() {
     supabase.from("clientes").select("id, nome").eq("ativo", true).order("nome", { ascending: true }),
     supabase
       .from("barbeiros")
-      .select("id, nome_exibicao")
-      .eq("ativo", true)
+      .select("id, nome_exibicao, ativo")
       .order("nome_exibicao", { ascending: true }),
     supabase
       .from("servicos")
@@ -51,11 +50,15 @@ export default async function AgendamentosPage() {
     .limit(50);
 
   const clientesMap = new Map((clientes ?? []).map((cliente) => [cliente.id, cliente.nome]));
-  const barbeirosMap = new Map((barbeiros ?? []).map((barbeiro) => [barbeiro.id, barbeiro.nome_exibicao]));
+  const barbeirosMap = new Map<string, { nome: string; ativo: boolean }>();
+  for (const b of barbeiros ?? []) {
+    barbeirosMap.set(b.id, { nome: b.nome_exibicao, ativo: b.ativo });
+  }
+  const barbeirosAtivos = (barbeiros ?? []).filter((b) => b.ativo);
   const servicosMap = new Map((servicos ?? []).map((servico) => [servico.id, servico.nome]));
 
   const defaultClienteId = clientes?.[0]?.id ?? "";
-  const defaultBarbeiroId = barbeiros?.[0]?.id ?? "";
+  const defaultBarbeiroId = barbeirosAtivos?.[0]?.id ?? "";
   const defaultServicoId = servicos?.[0]?.id ?? "";
 
   return (
@@ -102,7 +105,7 @@ export default async function AgendamentosPage() {
                 required
                 className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:ring-[3px]"
               >
-                {(barbeiros ?? []).map((barbeiro) => (
+                {(barbeirosAtivos).map((barbeiro) => (
                   <option key={barbeiro.id} value={barbeiro.id}>
                     {barbeiro.nome_exibicao}
                   </option>
@@ -214,18 +217,21 @@ export default async function AgendamentosPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Barbeiro</Label>
-                  <select
-                    name="barbeiro_id"
-                    defaultValue={agendamento.barbeiro_id}
-                    required
-                    className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:ring-[3px]"
-                  >
-                    {(barbeiros ?? []).map((barbeiro) => (
-                      <option key={barbeiro.id} value={barbeiro.id}>
-                        {barbeiro.nome_exibicao}
-                      </option>
-                    ))}
-                  </select>
+                   <select
+                     name="barbeiro_id"
+                     defaultValue={agendamento.barbeiro_id}
+                     required
+                     className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:ring-[3px]"
+                   >
+                     {agendamento.barbeiro_id && !barbeirosMap.get(agendamento.barbeiro_id)?.ativo && (
+                       <option value={agendamento.barbeiro_id}>(Barbeiro excluido)</option>
+                     )}
+                     {(barbeirosAtivos).map((barbeiro) => (
+                       <option key={barbeiro.id} value={barbeiro.id}>
+                         {barbeiro.nome_exibicao}
+                       </option>
+                     ))}
+                   </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Servico</Label>
@@ -309,7 +315,7 @@ export default async function AgendamentosPage() {
 
               <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                 <span>
-                  Cliente: {clientesMap.get(agendamento.cliente_id) ?? "N/A"} | Barbeiro: {barbeirosMap.get(agendamento.barbeiro_id) ?? "N/A"} | Servico: {servicosMap.get(agendamento.servico_id) ?? "N/A"}
+                  Cliente: {clientesMap.get(agendamento.cliente_id) ?? "N/A"} | Barbeiro: {!agendamento.barbeiro_id ? "(Barbeiro excluido)" : (barbeirosMap.get(agendamento.barbeiro_id)?.nome ?? "(Barbeiro excluido)")} | Servico: {servicosMap.get(agendamento.servico_id) ?? "N/A"}
                 </span>
                 <DeleteButton action={deleteAgendamento} recordId={agendamento.id} />
               </div>

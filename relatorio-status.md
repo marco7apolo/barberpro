@@ -1,9 +1,9 @@
 ﻿# BarberPro - Relatorio Completo de Status
 
-**Data:** 29 de Abril de 2026  
+**Data:** 30 de Abril de 2026  
 **Projeto:** BarberPro - Sistema Web para Barbearia  
 **Contexto:** Projeto Integrador da Univesp  
-**Versao:** 1.2.0
+**Versao:** 2.0.0
 
 ---
 
@@ -18,6 +18,7 @@ O BarberPro e um sistema web para gestao de barbearias, desenvolvido como parte 
 - Criar e gerenciar agendamentos com integracao financeira
 - Ver um dashboard com indicadores operacionais
 - Receber pagamentos via PIX (integracao preparada)
+- Gerar relatorios diarios com receitas, agendamentos e movimentacoes
 
 ### Como Funciona por Dentro?
 
@@ -38,228 +39,243 @@ O BarberPro e um sistema web para gestao de barbearias, desenvolvido como parte 
 | Next.js | 14.2.35 | Framework web (App Router) |
 | React | 18.3.1 | Biblioteca de UI |
 | TypeScript | 5.8.3 | Tipagem estatica (strict) |
-| Tailwind CSS | 4.1.12 | Estilizacao |
-| shadcn/ui | - | Componentes |
-| Radix UI | - | Primitivas acessiveis |
-| Supabase SSR | 0.5.2 | Auth + Banco de dados |
-| Zod | 3.24.4 | Validacao |
-| React Hook Form | 7.55.0 | Formularios |
-| Recharts | 2.15.2 | Graficos |
-| MUI | 7.3.5 | Icones e componentes |
-| Motion | 12.23.24 | Animacoes |
+| Supabase | N/A | Autenticacao, banco PostgreSQL, storage |
+| Tailwind CSS | 3.4.17 | Estilizacao (dark mode) |
+| shadcn/ui | N/A | Componentes UI reutilizaveis |
+| Lucide React | 0.513.0 | Icones |
+| Zod | 4.0.5 | Validacao de formularios |
+| PostCSS | 8.4.31 | Transformacao CSS |
+| ESLint | 8.56.0 | Linting de codigo |
 
 ---
 
-## 3. Estrutura do Projeto
+## 3. Estrutura de Pastas
 
 ```
 barberpro/
-|-- README.md
-|-- relatorio-status.md
-|-- relatorio-status.pdf
-+-- Design System para BarberPro/
-    |-- app/
-    |   |-- (auth)/login/page.tsx          [PRONTO]
-    |   |-- (dashboard)/
-    |   |   |-- layout.tsx                 [PRONTO]
-    |   |   |-- dashboard/page.tsx          [PRONTO - mock]
-    |   |   |-- dashboard/barbeiros/        [PRONTO]
-    |   |   |-- dashboard/servicos/         [PRONTO]
-    |   |   |-- clientes/page.tsx           [PRONTO]
-    |   |   +-- agendamentos/page.tsx       [PRONTO]
-    |   |-- api/webhooks/pix/               [ESQUELETO]
-    |   |-- politica-de-privacidade/        [PRONTO]
-    |   |-- components/                     [PRONTO]
-    |   +-- ui/ (48 componentes)            [PRONTO]
-    |-- lib/supabase/
-    |   |-- server.ts                       [PRONTO]
-    |   +-- client.ts                       [PRONTO]
-    |-- supabase/migrations/                [PRONTO]
-    |-- middleware.ts                       [PRONTO]
-    +-- package.json
+├── Design System para BarberPro/     # Projeto Next.js
+│   ├── app/
+│   │   ├── (dashboard)/
+│   │   │   ├── layout.tsx            # Layout principal com sidebar
+│   │   │   ├── dashboard/page.tsx    # Dashboard principal
+│   │   │   ├── dashboard/barbeiros/  # CRUD de barbeiros
+│   │   │   ├── dashboard/servicos/   # CRUD de servicos
+│   │   │   ├── dashboard/relatorios/ # Relatorio diario (nova)
+│   │   │   ├── clientes/             # CRUD de clientes
+│   │   │   ├── agendamentos/         # CRUD de agendamentos
+│   │   │   └── components/           # Componentes compartilhados (FormWithReload)
+│   │   ├── login/                    # Pagina de login
+│   │   └── components/               # Componentes de UI (Card, AppointmentCard)
+│   ├── lib/supabase/                 # Cliente Supabase (SSR, middleware)
+│   ├── supabase/migrations/          # Migrations do banco de dados
+│   └── middleware.ts                 # Middleware de autenticacao
+├── relatorio-status.md               # Este arquivo
+├── relatorio-status.pdf              # Versao PDF deste arquivo
+└── README.md                         # Documentacao do projeto
 ```
 
 ---
 
-## 4. Status por Modulo
+## 4. Funcionalidades Implementadas
 
-### 4.1 Autenticacao - [PRONTO]
-- Login email/senha via Supabase Auth
-- Server Actions para signIn/signOut
-- Cookies HttpOnly (seguro)
-- Middleware com renovacao automatica de token
-- Validacao Zod client + server
-- Bootstrap automatico de perfil admin ao logar
-- Politicas de privacidade e consentimento LGPD
+### 4.1 Autenticacao
+- Login com email e senha via Supabase Auth
+- Sessoes persistentes com cookies HttpOnly
+- Middleware protege rotas privadas (/dashboard, /clientes, /agendamentos)
+- Redirecionamento automatico para /login se nao autenticado
+- Bootstrap automatico de perfil admin
 
-### 4.2 CRUD de Barbeiros - [PRONTO]
-- Create, Read, Update, Delete completos
-- Validacao Zod no servidor
-- Server Actions com revalidatePath
-- Filtro por barbearia_id
+### 4.2 CRUD de Barbeiros
+- Criar, editar e excluir barbeiros
+- Campos: nome, CPF, telefone, email, especialidades, comissao, valor minimo
+- Status ativo/inativo
+- Link para ver receitas de cada barbeiro
+- **Soft delete → Hard delete**: Exclusao real com `ON DELETE SET NULL` nas FKs
+- CPF/email reutilizaveis apos exclusao (indice parcial)
 
-### 4.3 CRUD de Servicos - [PRONTO]
-- Create, Read, Update, Delete completos
-- Categorias: Cabelo, Barba, Combo, Coloracao, Outros
-- Preco em centavos com formatacao BRL
-- Validacao Zod com enum
+### 4.3 CRUD de Servicos
+- Criar, editar e excluir servicos
+- Vinculo com categorias (Cortes, Barba, Combo, etc.)
+- Campos: nome, descricao, duracao, preco, preco promocional, buffer
 
-### 4.4 CRUD de Clientes - [PRONTO]
-- Create, Read, Update, Delete completos
-- Campos: nome, telefone, email, CPF, data nascimento
-- Preferencias (tags)
-- Consentimento LGPD (promocoes WhatsApp, historico)
-- Vinculo com barbeiro criador
+### 4.4 CRUD de Clientes
+- Cadastro completo com consentimento LGPD (promocoes WhatsApp, historico)
+- Campos: nome, telefone, email, CPF, data nascimento, observacoes, preferencias
+- Vinculo com barbeiro que cadastrou
+- Sistema de indicacao entre clientes
 
-### 4.5 Agendamentos - [PRONTO - CORRIGIDO]
-- Create, Read, Update, Delete completos
-- Selecao de cliente, barbeiro e servico
-- Datas com datetime-local
-- Status: pendente, confirmado, em_andamento, concluido, cancelado, no_show
-- Integracao com tabela transacoes via syncTransacao
-- Gorjeta e forma de pagamento
-- **Correcao aplicada (29/04/2026):** syncTransacao movida para escopo do modulo, resolvendo erro "syncTransacao is not defined" em Server Actions
+### 4.5 Agendamentos
+- CRUD completo integrado com transacoes financeiras
+- Campos: cliente, barbeiro, servico, data inicio/fim, status, valor, gorjeta, forma de pagamento
+- Status: pendente, confirmado, em andamento, concluido, cancelado, no show
+- Formas de pagamento: PIX, cartao credito/debito, dinheiro, fiado
+- Criacao automatica de transacao financeira ao criar agendamento
 
-### 4.6 Dashboard - [PRONTO] (dados mock)
-- KPIs: agendamentos, faturamento, barbeiros ativos, ocupacao
-- Agendamentos do dia
-- Estatisticas rapidas
-- Pendente: conectar a dados reais do banco
+### 4.6 Dashboard
+- KPIs: Agendamentos hoje, Faturamento hoje, Receita acumulada, Barbeiros ativos
+- Proximos agendamentos (5 mais recentes)
+- Estatisticas rapidas (total de agendamentos, receitas, barbeiros, servicos)
 
-### 4.7 Pagamentos PIX - [ESQUELETO]
-- Webhook com verificacao de assinatura
-- Validacao Zod do payload
-- Pendente: persistencia, idempotencia, gateway real
+### 4.7 Receitas por Barbeiro
+- Pagina dedicada `/dashboard/barbeiros/[id]/receitas`
+- Receita total, pendente e comissao estimada
+- Transacoes agrupadas por dia com detalhes
 
-### 4.8 LGPD - [PRONTO]
-- Checkbox obrigatorio no login
-- Pagina de politica de privacidade
-- Consentimento granular em clientes
-
-### 4.9 Multi-Tenant - [BASE PRONTA]
-- Migrations com barbearia_id em todas as tabelas
-- RLS habilitado com policies
-- Pendente: resolucao dinamica por dominio
-
-### 4.10 UI/Design System - [PRONTO]
-- 48 componentes shadcn/ui
-- Dark mode padrao
-- Mobile-first responsivo
+### 4.8 Relatorio Diario (NOVO)
+- Rota: `/dashboard/relatorios`
+- **Filtro de data** com recarregamento forçado
+- **Resumo do dia**:
+  - Receita total (pago) e pendente
+  - Barbeiros novos cadastrados
+  - Total de registros adicionados/excluidos
+- **Receitas por Barbeiro**: breakdown com valores pagos/pendentes por barbeiro
+- **Agendamentos**: lista completa com cliente, servico, barbeiro, horario, status, pagamento, gorjeta
+- **Exportar PDF**: botao que usa `window.print()` para gerar PDF via navegador
 
 ---
 
-## 5. Correcoes Aplicadas
+## 5. Banco de Dados
 
-### Correcao 1: Bootstrap de Perfil Admin
-**Problema:** CRUDs falhavam com "Nao foi possivel salvar" por falta de perfil em public.perfis para satisfazer RLS.
-**Solucao:** Criado ensureBootstrapProfile(user) em server.ts, com upsert automatico de perfil admin no layout.
+### Tabelas Principais
 
-### Correcao 2: syncTransacao em Agendamentos
-**Problema:** Erro "syncTransacao is not defined" ao criar/atualizar agendamentos. A funcao estava definida dentro do componente mas chamada por Server Actions.
-**Solucao:** Funcao syncTransacao movida para escopo do modulo (nivel de arquivo), acessivel pelas Server Actions.
+| Tabela | Descricao |
+|--------|-----------|
+| perfis | Perfis de usuario vinculados ao Supabase Auth |
+| barbeiros | Cadastro de barbeiros com comissao e especialidades |
+| clientes | Cadastro de clientes com consentimento LGPD |
+| categorias_servicos | Categorias para organizacao de servicos |
+| servicos | Servicos oferecidos pela barbearia |
+| agendamentos | Agendamentos com integracao financeira |
+| transacoes | Transacoes financeiras (receitas, despesas) |
+| notificacoes | Sistema de notificacoes |
+| audit_log | Log de auditoria para compliance |
+| arquivos | Gestao de arquivos/uploads |
 
-### Correcao 3: Cadastros sobrescrevendo/demorando para atualizar
-**Problema:** Apos criar ou editar registros (agendamentos, clientes, barbeiros, servicos), o formulario nao limpava e parecia sobrescrever o ultimo registro.
-**Solucao:** Adicionado redirect() apos cada operacao de create e update em todos os CRUDs, forcando um reload completo da pagina com dados frescos.
+### Relacionamentos de Integridade (FKs)
+
+| Tabela | Coluna FK | Referencia | ON DELETE |
+|--------|-----------|------------|-----------|
+| barbeiros | perfil_id | perfis(id) | SET NULL |
+| clientes | criado_por | barbeiros(id) | SET NULL |
+| agendamentos | barbeiro_id | barbeiros(id) | SET NULL |
+| agendamentos | cliente_id | clientes(id) | SET NULL |
+| agendamentos | servico_id | servicos(id) | SET NULL |
+| transacoes | agendamento_id | agendamentos(id) | SET NULL |
+
+> **Nota importante**: Todas as FKs de agendamentos e transacoes usam `ON DELETE SET NULL`. Isso garante que ao excluir um barbeiro, cliente ou agendamento, os dados historicos de receitas e relatorios **nao sao perdidos**. O campo FK fica NULL e a interface exibe "(Barbeiro excluido)" ou similar.
+
+### Row Level Security (RLS)
+- Todas as tabelas tem RLS habilitado
+- Politicas de leitura para admin e barbeiros
+- Politicas de escrita para admin/atendente
+- Agendamentos com `barbeiro_id IS NULL` sao visiveis ao admin
+
+---
+
+## 6. Correcoes e Melhorias Aplicadas
+
+### Correcao 1: Estrutura de Server Actions
+**Problema:** Server Actions dentro de arquivos de pagina causavam erros de compilacao ("use server" em escopo incorreto).
+**Solucao:** Criados arquivos `actions.ts` separados para cada modulo (barbeiros, clientes, agendamentos).
+
+### Correcao 2: Dados stale e duplicacao no CRUD
+**Problema:** Ao criar/editar/excluir registros, os dados nao atualizavam corretamente na tela, duplicando registros ou mostrando itens ja excluidos.
+**Solucao:** Criado componente client `FormWithReload` que intercepta o submit, executa a action e recarrega a pagina com `window.location.reload()`. Mesmo padrao aplicado ao `DeleteButton`.
+
+### Correcao 3: Feedback visual em operacoes
+**Problema:** Botoes nao davam indicativo de que a operacao estava em andamento.
+**Solucao:** Adicionado estado `pending` com desabilitacao do botao e textos "Salvando..." / "Excluindo..." para evitar duplo clique.
 
 ### Correcao 4: Dashboard sem receita acumulada
-**Problema:** Dashboard mostrava apenas receita do dia, sem total acumulado de todas as receitas.
-**Solucao:** Adicionado KPI "Receita Acumulada" com query de todas as transacoes pagas, e atualizado card de estatisticas rapidas.
+**Problema:** Dashboard mostrava apenas receita do dia, sem total acumulado.
+**Solucao:** Adicionado KPI "Receita Acumulada" com query de todas as transacoes pagas.
 
-### Correcao 5: Cadastros e exclusoes com dados stale (cache nao invalidado) e falta de feedback visual
-**Problema:** Ao criar um barbeiro/cliente/agendamento novo, o registro nao aparecia na lista. Ao excluir, o registro errado desaparecia da tela. Era necessario sair e voltar para ver os dados corretos. Alem disso, os botoes nao davam feedback visual durante operacoes.
-**Causa raiz:** `revalidatePath` do Next.js so invalida o cache para a proxima requisicao, mas a resposta do Server Action mantinha dados stale. `redirect()` dentro de Server Actions nao funciona corretamente com `<form action={...}>` em Server Components no Next.js 14.
-**Solucao:** Criado componente client `FormWithReload` que:
-- Intercepta o submit do formulario com `e.preventDefault()`
-- Executa a Server Action manualmente
-- Chama `window.location.reload()` para refresh completo da pagina
-- O mesmo padrao foi aplicado ao `DeleteButton` para exclusoes
-- Adicionado estado `pending` com desabilitacao do botao e texto "Salvando..." / "Excluindo..."
-- Previne duplo clique acidental em criacoes/exclusoes
-- Resultado: apos qualquer acao (criar, editar, excluir), a pagina recarrega com dados 100% atualizados do Supabase com feedback visual imediato
+### Correcao 5: Preservacao de dados historicos ao excluir
+**Problema:** Ao excluir um barbeiro, todos os agendamentos e receitas dele eram apagados (CASCADE), impossibilitando relatorios historicos.
+**Solucao:**
+- Migrations para mudar todas as FKs relevantes de `ON DELETE CASCADE` para `ON DELETE SET NULL`
+- CPF/email agora usam indices parciais (validados apenas para registros ativos), permitindo reutilizacao
+- Interface mostra "(Barbeiro excluido)" quando o barbeiro foi removido
+- RLS atualizada para permitir leitura de agendamentos com `barbeiro_id IS NULL`
+
+### Correcao 6: Relatorio diario nao atualizava ao filtrar data
+**Problema:** O botao de filtrar data no relatorio nao recarregava os dados.
+**Solucao:** Componente client `DateFilter` usa `window.location.href` para forcar recarregamento completo da pagina com o novo parametro de data.
+
+### Correcao 7: Timezone incorreto no filtro de data
+**Problema:** `new Date("2026-04-30")` criava data com offset de timezone, causando busca no dia errado no banco (que armazena em UTC).
+**Solucao:** Usado `Date.UTC()` para construir datas em UTC corretamente, alinhando com o formato de armazenamento do Supabase.
 
 ### Nova Funcionalidade 1: Receitas por Barbeiro
 **Rota:** `/dashboard/barbeiros/[id]/receitas`
 - Pagina dedicada com receitas agrupadas por dia
 - Cards com receita total (pago), receita pendente e comissao estimada
 - Lista detalhada por dia com cliente, servico, horario, forma de pagamento e status
-- Link "Ver Receitas" adicionado em cada card de barbeiro na lista principal
+- Link "Ver Receitas" adicionado em cada card de barbeiro
+
+### Nova Funcionalidade 2: Relatorio Diario
+**Rota:** `/dashboard/relatorios`
+- Filtro de data com recarregamento forcado
+- Resumo: receita total, receita pendente, barbeiros novos, total adicionados/excluidos
+- Receitas por barbeiro (com valores pagos e pendentes)
+- Lista completa de agendamentos do dia selecionado
+- Botao "Exportar PDF" usa `window.print()` para gerar PDF via navegador
 
 ---
 
-## 6. Checklist UNIVESP
+## 7. Como Rodar o Projeto
 
-| Item | Status |
-|------|--------|
-| Next.js local rodando | Pronto |
-| Login/logout Supabase + cookies seguros | Pronto |
-| 2 CRUDs com Zod (Barbeiros + Servicos) | Pronto |
-| LGPD visivel (checkbox + politica) | Pronto |
-| Supabase conectado + RLS | Pronto |
-| UI responsiva mobile-first dark | Pronto |
-| CRUD de Clientes | Pronto |
-| CRUD de Agendamentos | Pronto (corrigido) |
-| Dashboard com receita acumulada | Pronto |
-| Receitas por barbeiro | Pronto |
-| GitHub com commits semanticos | Pendente |
+1. Instale as dependencias:
+   ```
+   npm install
+   ```
 
----
+2. Copie as variaveis de ambiente:
+   ```
+   copy .env.example .env.local
+   ```
 
-## 7. Banco de Dados
+3. Preencha no .env.local:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=
+   ```
 
-### Tabelas Implementadas
+4. Rode as migrations no Supabase SQL Editor (em ordem):
+   - `supabase/migrations/20260429_schema_final_rls_lgpd.sql` (schema principal)
+   - `supabase/migrations/20260430_preserve_on_delete_v2.sql` (FKs SET NULL)
+   - `supabase/migrations/20260430_unique_active_only.sql` (indices parciais CPF/email)
+   - `supabase/migrations/01_fix_rls_null_barbeiro.sql` (RLS para barbeiro_id NULL)
 
-**barbeiros:** id, barbearia_id, nome, telefone, email, especialidades[], comissao, status, created_at, updated_at
+5. Rode o projeto:
+   ```
+   npm run dev
+   ```
 
-**servicos:** id, barbearia_id, nome, categoria, duracao_minutos, preco_centavos, created_at, updated_at
-
-**clientes:** id, barbearia_id, nome, telefone, email, cpf, data_nascimento, observacoes, preferencias, consentimento_lgpd, criado_por, ativo
-
-**agendamentos:** id, barbearia_id, cliente_id, barbeiro_id, servico_id, data_inicio, data_fim, status, observacoes, valor_total, gorjeta, forma_pagamento, pago
-
-**perfis:** id, user_id, barbearia_id, cargo, nome, created_at
-
-**transacoes:** id, agendamento_id, tipo, valor, forma_pagamento, descricao, status, processado_em
-
----
-
-## 8. Seguranca
-
-| Medida | Status |
-|--------|--------|
-| Cookies HttpOnly | Pronto |
-| Server Actions | Pronto |
-| Validacao Zod | Pronto |
-| RLS no Supabase | Pronto |
-| Bootstrap de perfil | Pronto |
-| Erros genericos de auth | Pronto |
-| Webhook signature verification | Pronto |
-| Timing-safe comparison | Pronto |
+6. Build de producao:
+   ```
+   npm run build
+   npm run start
+   ```
 
 ---
 
-## 9. Proximos Passos
+## 8. Historico de Commits
 
-### Prioridade Alta
-1. Finalizar webhook PIX (idempotencia, reconciliacao)
-2. Testes automatizados
+### Versao 2.0.0 (30/04/2026)
+```
+1. fix(crud): adicionar FormWithReload com refresh automatico apos submit
+2. feat(ui): adicionar feedback visual de loading em botoes de CRUD
+3. feat(relatorios): preservar dados ao excluir barbeiros/clientes e adicionar relatorio diario
+4. fix(relatorios): filtrar ativos, corrigir formulario de data e migration v2
+5. fix(relatorios): corrigir contagem de barbeiros, receita por agendamento e constraints de unicidade
+6. fix(relatorios): corrigir filtro de data e FK de agendamentos
+7. fix(relatorios): usar window.location.href para forcar refresh ao filtrar data
+8. fix(relatorios): hard delete com SET NULL, UTC date filter e vinculos perdidos
+9. feat(relatorios): relatorio diario com export PDF, correcao de data e contagens
+```
 
-### Prioridade Media
-3. Multi-tenant dinamico por dominio
-4. Tabela barbearias para gestao de tenants
-5. Calendario visual para agendamentos
-6. Conectar Dashboard a dados reais (KPIs de ocupacao)
-
-### Prioridade Baixa
-7. Commits semanticos no Git
-8. Politica de privacidade completa
-9. CI/CD com GitHub Actions
-10. Deploy Vercel + Supabase
-
----
-
-## 10. Commits Semanticos Sugeridos
-
+### Versao 1.x (29/04/2026)
 ```
 1. feat(next): migrar estrutura vite para next14 app router
 2. feat(auth): implementar supabase ssr com middleware e server actions
@@ -274,25 +290,4 @@ barberpro/
 
 ---
 
-## 11. Como Rodar o Projeto
-
-1. Instale as dependencias:
-   npm install
-
-2. Copie as variaveis de ambiente:
-   copy .env.example .env.local
-
-3. Preencha no .env.local:
-   NEXT_PUBLIC_SUPABASE_URL
-   NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-4. Rode o projeto:
-   npm run dev
-
-5. Build de producao:
-   npm run build
-   npm run start
-
----
-
-*Relatorio gerado em 29/04/2026*
+*Relatorio gerado em 30/04/2026*
