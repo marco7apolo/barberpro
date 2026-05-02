@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Card"
 import { Badge } from "@/app/ui/badge";
 import { Label } from "@/app/ui/label";
 import { DateFilter } from "./DateFilter";
-import { Button } from "@/app/ui/button";
-import { FileDown, CalendarDays, DollarSign, Users, Scissors } from "lucide-react";
+import { ExportPdfButton } from "./ExportPdfButton";
+import { CalendarDays, DollarSign, Users, Scissors } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -167,9 +167,7 @@ export default async function RelatorioDiarioPage({ searchParams }: { searchPara
           <h1 className="text-3xl font-semibold text-primary">Relatorio Diario</h1>
           <p className="text-muted-foreground">Visao completa de receitas, agendamentos e movimentacoes do dia.</p>
         </div>
-        <Button variant="outline" className="gap-2 print:hidden" onClick={() => window.print()}>
-          <FileDown className="h-4 w-4" /> Exportar PDF
-        </Button>
+        <ExportPdfButton />
       </div>
 
       <Card className="print:hidden">
