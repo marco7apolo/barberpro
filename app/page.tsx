@@ -1,8 +1,13 @@
-export default function HomePage() {
-  return (
-    <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>BarberPro - Deploy Test</h1>
-      <p>If you see this, the deployment is working!</p>
-    </main>
-  );
+import { redirect } from "next/navigation";
+
+import { getAuthenticatedUser } from "@/lib/supabase/server";
+
+export default async function HomePage() {
+  const user = await getAuthenticatedUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  redirect("/auth/login");
 }
