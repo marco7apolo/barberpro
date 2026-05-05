@@ -1,15 +1,8 @@
-import { redirect } from "next/navigation";
-
-import { getAuthenticatedUser } from "@/lib/supabase/server";
-
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const user = await getAuthenticatedUser();
-
-  if (user) {
-    redirect("/dashboard");
-  }
-
-  redirect("/login");
+export default function HomePage() {
+  return (
+    <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
+      <h1>BarberPro - Deploy Test</h1>
+      <p>If you see this, the deployment is working!</p>
+    </main>
+  );
 }
