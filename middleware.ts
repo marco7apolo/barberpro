@@ -55,12 +55,12 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedPath(pathname) && !user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
+    loginUrl.pathname = "/auth/login";
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname === "/login" && user) {
+  if (pathname === "/auth/login" && user) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = "/dashboard";
     dashboardUrl.search = "";
@@ -71,5 +71,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*", "/clientes/:path*", "/agendamentos/:path*"],
+  matcher: ["/auth/login", "/dashboard/:path*", "/clientes/:path*", "/agendamentos/:path*"],
 };
