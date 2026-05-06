@@ -59,8 +59,8 @@ export async function createBarbeiro(formData: FormData) {
     throw new Error(`Nao foi possivel salvar o barbeiro. Erro: ${insertError.message}`);
   }
 
-  revalidatePath("/dashboard/barbeiros", "layout");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/dashboard/barbeiros", "layout");
+  redirect("/dashboard/dashboard/barbeiros");
 }
 
 export async function updateBarbeiro(formData: FormData) {
@@ -104,8 +104,8 @@ export async function updateBarbeiro(formData: FormData) {
     throw new Error("Nao foi possivel atualizar o barbeiro.");
   }
 
-  revalidatePath("/dashboard/barbeiros", "layout");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/dashboard/barbeiros", "layout");
+  redirect("/dashboard/dashboard/barbeiros");
 }
 
 export async function deleteBarbeiro(formData: FormData) {
@@ -127,6 +127,6 @@ export async function deleteBarbeiro(formData: FormData) {
     throw new Error(`Nao foi possivel excluir o barbeiro. Erro: ${deleteError.message}`);
   }
 
-  revalidatePath("/dashboard/barbeiros", "layout");
-  redirect("/dashboard/barbeiros");
+  revalidatePath("/dashboard/dashboard/barbeiros", "layout");
+  redirect("/dashboard/dashboard/barbeiros");
 }

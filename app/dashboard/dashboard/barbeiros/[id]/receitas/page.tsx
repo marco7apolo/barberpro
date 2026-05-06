@@ -65,7 +65,7 @@ export default async function BarbeiroReceitasPage({ params }: { params: { id: s
   if (!barbeiro) {
     return (
       <div className="space-y-6">
-        <Link href="/dashboard/barbeiros">
+        <Link href="/dashboard/dashboard/barbeiros">
           <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
@@ -144,7 +144,7 @@ export default async function BarbeiroReceitasPage({ params }: { params: { id: s
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/barbeiros">
+        <Link href="/dashboard/dashboard/barbeiros">
           <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>

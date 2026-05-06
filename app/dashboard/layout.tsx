@@ -26,12 +26,12 @@ interface DashboardLayoutProps {
 export const dynamic = "force-dynamic";
 
 const navigationItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/barbeiros", label: "Barbeiros", icon: Users },
-  { href: "/dashboard/servicos", label: "Servicos", icon: Scissors },
-  { href: "/clientes", label: "Clientes", icon: Users },
-  { href: "/agendamentos", label: "Agendamentos", icon: CalendarDays },
-  { href: "/dashboard/relatorios", label: "Relatorios", icon: FileBarChart },
+  { href: "/dashboard/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/dashboard/barbeiros", label: "Barbeiros", icon: Users },
+  { href: "/dashboard/dashboard/servicos", label: "Servicos", icon: Scissors },
+  { href: "/dashboard/clientes", label: "Clientes", icon: Users },
+  { href: "/dashboard/agendamentos", label: "Agendamentos", icon: CalendarDays },
+  { href: "/dashboard/dashboard/relatorios", label: "Relatorios", icon: FileBarChart },
 ] as const;
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {

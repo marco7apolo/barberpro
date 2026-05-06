@@ -139,7 +139,7 @@ export default async function BarbeirosPage() {
               </FormWithReload>
 
               <div className="mt-3 flex items-center gap-2">
-                <Link href={`/dashboard/barbeiros/${barbeiro.id}/receitas`}>
+                  <Link href={`/dashboard/dashboard/barbeiros/${barbeiro.id}/receitas`}>
                   <Button variant="outline" className="text-green-400 gap-2">
                     <DollarSign className="h-4 w-4" /> Ver Receitas
                   </Button>
