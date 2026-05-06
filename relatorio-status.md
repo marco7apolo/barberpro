@@ -1,9 +1,9 @@
 ﻿# BarberPro - Relatorio Completo de Status
 
-**Data:** 30 de Abril de 2026  
+**Data:** 06 de Maio de 2026  
 **Projeto:** BarberPro - Sistema Web para Barbearia  
 **Contexto:** Projeto Integrador da Univesp  
-**Versao:** 2.0.0
+**Versao:** 2.1.0
 
 ---
 
@@ -39,13 +39,13 @@ O BarberPro e um sistema web para gestao de barbearias, desenvolvido como parte 
 | Next.js | 14.2.35 | Framework web (App Router) |
 | React | 18.3.1 | Biblioteca de UI |
 | TypeScript | 5.8.3 | Tipagem estatica (strict) |
-| Supabase | N/A | Autenticacao, banco PostgreSQL, storage |
-| Tailwind CSS | 3.4.17 | Estilizacao (dark mode) |
+| Supabase | 2.105.1 | Autenticacao, banco PostgreSQL, storage |
+| Tailwind CSS | 4.1.12 | Estilizacao (dark mode) |
 | shadcn/ui | N/A | Componentes UI reutilizaveis |
-| Lucide React | 0.513.0 | Icones |
-| Zod | 4.0.5 | Validacao de formularios |
-| PostCSS | 8.4.31 | Transformacao CSS |
-| ESLint | 8.56.0 | Linting de codigo |
+| Lucide React | 0.487.0 | Icones |
+| Zod | 3.24.4 | Validacao de formularios |
+| @supabase/ssr | 0.5.2 | Server-side auth |
+| Motion | 12.23.24 | Animacoes |
 
 ---
 
@@ -288,6 +288,17 @@ barberpro/
 9. docs(readme): documentar setup, env e checklist univesp
 ```
 
+### Versao 2.1.0 (06/05/2026) - Deploy Vercel Funcional
+```
+1. fix(deploy): remover arquivos vite (index.html, vite.config.ts)
+2. fix(deploy): corrigir redirecionamento /login para /auth/login no middleware
+3. fix(deploy): corrigir loop de redirecionamento no dashboard/page.tsx
+4. fix(deploy): ajustar links de navegacao para /dashboard/dashboard/
+5. fix(deploy): configurar variaveis de ambiente no Vercel
+6. chore(vercel): remover vercel.json para auto-detect Next.js
+7. test(deploy): validar todas as rotas funcionando no Vercel
+```
+
 ---
 
-*Relatorio gerado em 30/04/2026*
+*Relatorio gerado em 06/05/2026*
